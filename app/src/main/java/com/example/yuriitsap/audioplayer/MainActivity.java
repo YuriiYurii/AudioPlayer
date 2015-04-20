@@ -19,7 +19,6 @@ import java.util.ArrayList;
 public class MainActivity extends ActionBarActivity {
 
     private IMyAidlInterface mIMyAidlInterface;
-    private MusicService mMusicService;
     private android.widget.ListView mListView;
     private ListViewAdapter mListViewAdapter;
     private ArrayList<Song> mSongs;
@@ -52,7 +51,6 @@ public class MainActivity extends ActionBarActivity {
         mSongs = new ArrayList<>(0);
         mListViewAdapter = new ListViewAdapter();
         mListView.setAdapter(mListViewAdapter);
-
     }
 
     @Override

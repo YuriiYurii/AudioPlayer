@@ -4,8 +4,10 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.IBinder;
+import android.os.RemoteException;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by yuriitsap on 17.04.15.
@@ -15,6 +17,19 @@ public class MusicService extends Service {
     private MediaPlayer mMediaPlayer;
     private int mPosition;
     private ArrayList<Song> mSongs;
+    public IMyAidlInterface.Stub mStub = new IMyAidlInterface.Stub() {
+        @Override
+        public List<Song> getPlaylist() throws RemoteException {
+            return mSongs;
+        }
+
+        @Override
+        public void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
+                double aDouble,
+                String aString) throws RemoteException {
+
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -27,11 +42,7 @@ public class MusicService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    public ArrayList<Song> getPlaylist() {
-        return mSongs;
+        return mStub;
     }
 
     private void initPlaylist() {
@@ -41,5 +52,4 @@ public class MusicService extends Service {
         mSongs.add(new Song(R.raw.second).setName("Song 2").setDuration(200000));
         mSongs.add(new Song(R.raw.third).setName("Song 3").setDuration(200000));
     }
-
 }
