@@ -8,7 +8,7 @@ import android.os.Parcelable;
  */
 public class Song implements Parcelable {
 
-    private static final Creator<Song> CREATOR = new Creator<Song>() {
+    public static final Creator<Song> CREATOR = new Creator<Song>() {
         @Override
         public Song createFromParcel(Parcel source) {
             return new Song(source);
@@ -46,16 +46,18 @@ public class Song implements Parcelable {
         return mName;
     }
 
-    public void setName(String name) {
+    public Song setName(String name) {
         mName = name;
+        return this;
     }
 
     public long getDuration() {
         return mDuration;
     }
 
-    public void setDuration(long duration) {
+    public Song setDuration(long duration) {
         mDuration = duration;
+        return this;
     }
 
     @Override
