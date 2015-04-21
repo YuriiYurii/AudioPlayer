@@ -21,8 +21,9 @@ public class Song implements Parcelable {
     };
 
     private int mId;
-    private String mName;
-    private long mDuration;
+    private String mArtist;
+    private String mTitle;
+    private int mDuration;
 
     public Song(int id) {
         mId = id;
@@ -30,8 +31,9 @@ public class Song implements Parcelable {
 
     public Song(Parcel source) {
         mId = source.readInt();
-        mDuration = source.readLong();
-        mName = source.readString();
+        mDuration = source.readInt();
+        mArtist = source.readString();
+        mTitle = source.readString();
     }
 
     public int getId() {
@@ -42,20 +44,27 @@ public class Song implements Parcelable {
         mId = id;
     }
 
-    public String getName() {
-        return mName;
+    public String getArtist() {
+        return mArtist;
     }
 
-    public Song setName(String name) {
-        mName = name;
-        return this;
+    public void setArtist(String artist) {
+        mArtist = artist;
     }
 
-    public long getDuration() {
+    public String getTitle() {
+        return mTitle;
+    }
+
+    public void setTitle(String title) {
+        mTitle = title;
+    }
+
+    public int getDuration() {
         return mDuration;
     }
 
-    public Song setDuration(long duration) {
+    public Song setDuration(int duration) {
         mDuration = duration;
         return this;
     }
@@ -68,7 +77,8 @@ public class Song implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(mId);
-        dest.writeLong(mDuration);
-        dest.writeString(mName);
+        dest.writeInt(mDuration);
+        dest.writeString(mArtist);
+        dest.writeString(mTitle);
     }
 }

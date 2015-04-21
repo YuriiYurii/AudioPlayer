@@ -26,7 +26,6 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
                 mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mMediaPlayer.prepareAsync();
-                mMediaPlayer.start();
             } catch (IOException e) {
                 e.printStackTrace();
             }
