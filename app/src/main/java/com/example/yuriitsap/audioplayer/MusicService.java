@@ -38,13 +38,18 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         }
 
         @Override
+        public int getCurrentPosition() throws RemoteException {
+            return mMediaPlayer.getCurrentPosition();
+        }
+
+        @Override
         public void pause() throws RemoteException {
             mMediaPlayer.pause();
         }
 
         @Override
         public int getDuration() throws RemoteException {
-            return 0;
+            return mMediaPlayer.getDuration();
         }
 
         @Override
@@ -73,13 +78,14 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         stopForeground(true);
+        mMediaPlayer.stop();
+        mMediaPlayer.release();
     }
 
     @Override

@@ -6,6 +6,7 @@ import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
@@ -16,8 +17,10 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.Formatter;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -27,8 +30,13 @@ public class MainActivity extends ActionBarActivity {
     private ListViewAdapter mListViewAdapter;
     private List<Song> mSongs;
     private LinearLayout mControlls;
+    private static final int UPDATE_PROGRESS = 1;
+    private TextView mSongDescription;
+    private TextView mDuration, mCurrentTime;
     private ImageButton mPlayPause;
     private int mCurrentSongPosition = -1;
+    private StringBuilder mCurrentTimeFormatter = new StringBuilder();
+    private Formatter mFormatter;
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -48,6 +56,7 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
         initPlaylist();
         initControls();
+        mFormatter = new Formatter(mCurrentTimeFormatter, Locale.getDefault());
         mListView = (android.widget.ListView) findViewById(R.id.playlist);
         mListViewAdapter = new ListViewAdapter();
         Intent playIntent = new Intent(this, MusicService.class);
@@ -58,12 +67,14 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     mControlls.setVisibility(View.GONE);
+                    mHandler.removeMessages(UPDATE_PROGRESS);
                 }
             };
 
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
                 mControlls.setVisibility(View.VISIBLE);
+                mHandler.sendEmptyMessage(UPDATE_PROGRESS);
                 view.removeCallbacks(hideControlls);
                 view.postDelayed(hideControlls, 5000);
 
@@ -87,6 +98,9 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void initControls() {
+        mSongDescription = (TextView) findViewById(R.id.song_description);
+        mDuration = (TextView) findViewById(R.id.song_duration_time);
+        mCurrentTime = (TextView) findViewById(R.id.current_song_time);
         mControlls = (LinearLayout) findViewById(R.id.play_controls);
         mPlayPause = (ImageButton) findViewById(R.id.play_pause);
         mPlayPause.setOnClickListener(new View.OnClickListener() {
@@ -147,4 +161,39 @@ public class MainActivity extends ActionBarActivity {
             e.printStackTrace();
         }
     }
+
+    private android.os.Handler mHandler = new android.os.Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case UPDATE_PROGRESS:
+                    updateProgress();
+                    sendMessageDelayed(msg, 1000);
+
+            }
+        }
+    };
+
+    private void updateProgress() {
+        try {
+            if (mIMyAidlInterface != null && mIMyAidlInterface.isPlaying()) {
+                mCurrentTime.setText(
+                        formatTime(mIMyAidlInterface.getCurrentPosition()));
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private String formatTime(int millis) {
+        int totalTime = millis / 1000;
+        int seconds = totalTime % 60;
+        int minutes = (totalTime / 60) % 60;
+
+        mCurrentTimeFormatter.setLength(0);
+        return mFormatter.format("%02d:%02d", minutes, seconds).toString();
+    }
+
+
 }

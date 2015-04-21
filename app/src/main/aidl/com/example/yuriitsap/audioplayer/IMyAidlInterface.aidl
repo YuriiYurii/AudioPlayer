@@ -10,6 +10,7 @@ interface IMyAidlInterface {
      */
      void play(String uri);
      void start();
+     int getCurrentPosition();
      void pause();
      int getDuration();
      boolean isPlaying();
