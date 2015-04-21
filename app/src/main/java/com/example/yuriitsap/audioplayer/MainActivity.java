@@ -75,7 +75,6 @@ public class MainActivity extends ActionBarActivity {
                 mControlls.setVisibility(View.VISIBLE);
                 view.removeCallbacks(hideControlls);
                 view.postDelayed(hideControlls, 5000);
-
                 try {
                     if (mCurrentSongPosition == position) {
                         mIMyAidlInterface.pause();
@@ -88,10 +87,8 @@ public class MainActivity extends ActionBarActivity {
                     e.printStackTrace();
                 }
                 mCurrentSongPosition = position;
-
             }
         });
-
         mListView.setAdapter(mListViewAdapter);
     }
 
@@ -149,10 +146,10 @@ public class MainActivity extends ActionBarActivity {
     private void updatePlayButton() {
         try {
             if (mIMyAidlInterface != null && mIMyAidlInterface.isPlaying()) {
-                mPlayPause.setImageResource(R.drawable.ic_action_pause);
+                mPlayPause.setImageResource(R.drawable.ic_action_play);
                 mIMyAidlInterface.pause();
             } else {
-                mPlayPause.setImageResource(R.drawable.ic_action_play);
+                mPlayPause.setImageResource(R.drawable.ic_action_pause);
                 mIMyAidlInterface.start();
             }
         } catch (RemoteException e) {
@@ -171,7 +168,6 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-
     private String formatTime(int millis) {
         int totalTime = millis / 1000;
         int seconds = totalTime % 60;
@@ -180,6 +176,4 @@ public class MainActivity extends ActionBarActivity {
         mCurrentTimeFormatter.setLength(0);
         return mFormatter.format("%02d:%02d", minutes, seconds).toString();
     }
-
-
 }
