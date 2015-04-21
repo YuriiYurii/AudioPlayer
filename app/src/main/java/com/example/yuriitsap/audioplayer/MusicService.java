@@ -1,33 +1,55 @@
 package com.example.yuriitsap.audioplayer;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteException;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 
 /**
  * Created by yuriitsap on 17.04.15.
  */
-public class MusicService extends Service {
+public class MusicService extends Service implements MediaPlayer.OnPreparedListener {
 
     private MediaPlayer mMediaPlayer;
-    private int mPosition;
-    private ArrayList<Song> mSongs;
-    public IMyAidlInterface.Stub mStub = new IMyAidlInterface.Stub() {
+    private IMyAidlInterface.Stub mStub = new IMyAidlInterface.Stub() {
         @Override
-        public List<Song> getPlaylist() throws RemoteException {
-            return mSongs;
+        public void play(String uri) throws RemoteException {
+            try {
+                mMediaPlayer.reset();
+                mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
+                mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                mMediaPlayer.prepareAsync();
+                mMediaPlayer.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
-        public void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
-                double aDouble,
-                String aString) throws RemoteException {
+        public void start() throws RemoteException {
+            mMediaPlayer.start();
+        }
 
+        @Override
+        public void pause() throws RemoteException {
+            mMediaPlayer.pause();
+        }
+
+        @Override
+        public int getDuration() throws RemoteException {
+            return 0;
+        }
+
+        @Override
+        public boolean isPlaying() throws RemoteException {
+            return mMediaPlayer.isPlaying();
         }
     };
 
@@ -35,9 +57,8 @@ public class MusicService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        initPlaylist();
-        mPosition = 0;
         mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.setOnPreparedListener(this);
     }
 
     @Override
@@ -45,11 +66,39 @@ public class MusicService extends Service {
         return mStub;
     }
 
-    private void initPlaylist() {
-//        Uri.parse("android.resource://com.my.package/" + R.raw.first);
-        mSongs = new ArrayList<>();
-        mSongs.add(new Song(R.raw.first).setName("Song 1").setDuration(200000));
-        mSongs.add(new Song(R.raw.second).setName("Song 2").setDuration(200000));
-        mSongs.add(new Song(R.raw.third).setName("Song 3").setDuration(200000));
+    @Override
+    public boolean onUnbind(Intent intent) {
+        return false;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        stopForeground(true);
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mp) {
+        mp.start();
+
+        Intent notIntent = new Intent(this, MainActivity.class);
+        notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pendInt = PendingIntent.getActivity(this, 0,
+                notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Notification.Builder builder = new Notification.Builder(this);
+        builder.setContentIntent(pendInt)
+                .setSmallIcon(R.drawable.ic_action_play)
+                .setTicker("Lalala")
+                .setOngoing(true)
+                .setContentTitle("Playing")
+                .setContentText("First");
+        Notification not = builder.build();
+        startForeground(1, not);
     }
 }

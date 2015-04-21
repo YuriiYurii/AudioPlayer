@@ -3,17 +3,21 @@ package com.example.yuriitsap.audioplayer;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -21,24 +25,19 @@ public class MainActivity extends ActionBarActivity {
     private IMyAidlInterface mIMyAidlInterface;
     private android.widget.ListView mListView;
     private ListViewAdapter mListViewAdapter;
-    private ArrayList<Song> mSongs;
+    private List<Song> mSongs;
+    private LinearLayout mControlls;
+    private ImageButton mPlayPause;
+    private int mCurrentSongPosition = -1;
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mIMyAidlInterface = IMyAidlInterface.Stub.asInterface(service);
-            try {
-                mSongs = (ArrayList<Song>) mIMyAidlInterface.getPlaylist();
-                mListViewAdapter.notifyDataSetChanged();
-            } catch (RemoteException e) {
-                Log.e("TAG", " Remote connection has been lost " + e);
-            }
-
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mIMyAidlInterface = null;
-
         }
     };
 
@@ -47,18 +46,56 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+        initPlaylist();
+        initControls();
         mListView = (android.widget.ListView) findViewById(R.id.playlist);
-        mSongs = new ArrayList<>(0);
         mListViewAdapter = new ListViewAdapter();
-        mListView.setAdapter(mListViewAdapter);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
         Intent playIntent = new Intent(this, MusicService.class);
         bindService(playIntent, mServiceConnection, BIND_AUTO_CREATE);
         startService(playIntent);
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            Runnable hideControlls = new Runnable() {
+                @Override
+                public void run() {
+                    mControlls.setVisibility(View.GONE);
+                }
+            };
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                mControlls.setVisibility(View.VISIBLE);
+                view.removeCallbacks(hideControlls);
+                view.postDelayed(hideControlls, 5000);
+
+                try {
+                    if (mCurrentSongPosition == position) {
+                        mIMyAidlInterface.pause();
+                        return;
+                    }
+                    mIMyAidlInterface
+                            .play(Uri.parse("android.resource://com.example.yuriitsap.audioplayer/"
+                                    + mSongs.get(position).getId()).toString());
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                mCurrentSongPosition = position;
+
+            }
+        });
+
+        mListView.setAdapter(mListViewAdapter);
+    }
+
+    private void initControls() {
+        mControlls = (LinearLayout) findViewById(R.id.play_controls);
+        mPlayPause = (ImageButton) findViewById(R.id.play_pause);
+        mPlayPause.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updatePlayButton();
+
+            }
+        });
     }
 
     private class ListViewAdapter extends BaseAdapter {
@@ -86,6 +123,28 @@ public class MainActivity extends ActionBarActivity {
             ((TextView) convertView.findViewById(R.id.song_name))
                     .setText(mSongs.get(position).getName());
             return convertView;
+        }
+    }
+
+    private void initPlaylist() {
+        mSongs = new LinkedList<>();
+        for (int i = 40; i > 0; i--) {
+            mSongs.add(new Song(R.raw.first).setDuration(200).setName("Song N" + i));
+
+        }
+    }
+
+    private void updatePlayButton() {
+        try {
+            if (mIMyAidlInterface != null && mIMyAidlInterface.isPlaying()) {
+                mPlayPause.setImageResource(R.drawable.ic_action_pause);
+                mIMyAidlInterface.pause();
+            } else {
+                mPlayPause.setImageResource(R.drawable.ic_action_play);
+                mIMyAidlInterface.start();
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 }
