@@ -67,14 +67,12 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void run() {
                     mControlls.setVisibility(View.GONE);
-                    mHandler.removeMessages(UPDATE_PROGRESS);
                 }
             };
 
             @Override
             public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
                 mControlls.setVisibility(View.VISIBLE);
-                mHandler.sendEmptyMessage(UPDATE_PROGRESS);
                 view.removeCallbacks(hideControlls);
                 view.postDelayed(hideControlls, 5000);
 
@@ -161,18 +159,6 @@ public class MainActivity extends ActionBarActivity {
             e.printStackTrace();
         }
     }
-
-    private android.os.Handler mHandler = new android.os.Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case UPDATE_PROGRESS:
-                    updateProgress();
-                    sendMessageDelayed(msg, 1000);
-
-            }
-        }
-    };
 
     private void updateProgress() {
         try {
