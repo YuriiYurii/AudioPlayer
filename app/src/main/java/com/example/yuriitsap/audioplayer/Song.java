@@ -57,8 +57,9 @@ public class Song implements Parcelable {
         return mTitle;
     }
 
-    public void setTitle(String title) {
+    public Song setTitle(String title) {
         mTitle = title;
+        return this;
     }
 
     public int getDuration() {

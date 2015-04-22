@@ -3,6 +3,7 @@ package com.example.yuriitsap.audioplayer;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,7 +49,6 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mIMyAidlInterface = IMyAidlInterface.Stub.asInterface(service);
-            show(5000);
         }
 
         @Override
@@ -60,6 +60,9 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Cursor cursor = getContentResolver()
+                .query(AudioProvider.PLAYLIST_CONTENT_URI, null, null, null, "");
+        Log.e("TAG", "size = " + cursor.getCount());
 
         setContentView(R.layout.activity_main);
         initPlaylist();
@@ -78,6 +81,7 @@ public class MainActivity extends ActionBarActivity {
                     show(5000);
                     if (mCurrentSongPosition == position) {
                         doPlayPause();
+                        return;
                     }
                     mIMyAidlInterface
                             .play(Uri.parse("android.resource://com.example.yuriitsap.audioplayer/"

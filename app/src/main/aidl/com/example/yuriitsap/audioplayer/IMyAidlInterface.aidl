@@ -10,9 +10,9 @@ interface IMyAidlInterface {
      */
      void play(String uri);
      void start();
-     int getCurrentPosition();
      void pause();
-     int getDuration();
-     void seekTo(int position);
      boolean isPlaying();
+     void seekTo(int position);
+     int getCurrentPosition();
+     int getDuration();
 }
