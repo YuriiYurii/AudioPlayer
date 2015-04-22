@@ -13,5 +13,6 @@ interface IMyAidlInterface {
      int getCurrentPosition();
      void pause();
      int getDuration();
+     void seekTo(int position);
      boolean isPlaying();
 }

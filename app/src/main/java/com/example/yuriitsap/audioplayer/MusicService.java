@@ -52,6 +52,11 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         }
 
         @Override
+        public void seekTo(int position) throws RemoteException {
+            mMediaPlayer.seekTo(position);
+        }
+
+        @Override
         public boolean isPlaying() throws RemoteException {
             return mMediaPlayer.isPlaying();
         }

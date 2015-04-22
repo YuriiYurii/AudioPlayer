@@ -48,8 +48,9 @@ public class Song implements Parcelable {
         return mArtist;
     }
 
-    public void setArtist(String artist) {
+    public Song setArtist(String artist) {
         mArtist = artist;
+        return this;
     }
 
     public String getTitle() {
