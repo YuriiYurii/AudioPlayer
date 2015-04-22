@@ -4,17 +4,17 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -32,8 +32,6 @@ public class MainActivity extends ActionBarActivity {
     private static final int SHOW_CONTROLS = 1;
     private static final int UPDATE_PROGRESS = 2;
     private IMyAidlInterface mIMyAidlInterface;
-    private android.widget.ListView mListView;
-    private ListViewAdapter mListViewAdapter;
     private List<Song> mSongs;
     private LinearLayout mControlls;
     private TextView mSongDescription;
@@ -43,6 +41,7 @@ public class MainActivity extends ActionBarActivity {
     private int mCurrentSongPosition = -1;
     private boolean mControllsVisible;
     private boolean mUserDragging;
+    private RecyclerView mRecyclerView;
     private StringBuilder mCurrentTimeFormatter = new StringBuilder();
     private Formatter mFormatter;
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -60,39 +59,19 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Cursor cursor = getContentResolver()
-                .query(AudioProvider.PLAYLIST_CONTENT_URI, null, null, null, "");
-        Log.e("TAG", "size = " + cursor.getCount());
 
         setContentView(R.layout.activity_main);
-        initPlaylist();
-        initControls();
-        mFormatter = new Formatter(mCurrentTimeFormatter, Locale.getDefault());
-        mListView = (android.widget.ListView) findViewById(R.id.playlist);
-        mListViewAdapter = new ListViewAdapter();
-        Intent playIntent = new Intent(this, MusicService.class);
-        bindService(playIntent, mServiceConnection, BIND_AUTO_CREATE);
-        startService(playIntent);
-        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-                try {
-                    show(5000);
-                    if (mCurrentSongPosition == position) {
-                        doPlayPause();
-                        return;
-                    }
-                    mIMyAidlInterface
-                            .play(Uri.parse("android.resource://com.example.yuriitsap.audioplayer/"
-                                    + mSongs.get(position).getId()).toString());
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-                mCurrentSongPosition = position;
-            }
-        });
-        mListView.setAdapter(mListViewAdapter);
+        Cursor cursor = getContentResolver()
+                .query(AudioProvider.PLAYLIST_CONTENT_URI, null, null, null, "");
+        mRecyclerView = (RecyclerView) findViewById(R.id.playlist);
+        mRecyclerView.setAdapter(new RecyclerCursorAdapter(cursor));
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+//        initPlaylist();
+//        initControls();
+//        mFormatter = new Formatter(mCurrentTimeFormatter, Locale.getDefault());
+//        Intent playIntent = new Intent(this, MusicService.class);
+//        bindService(playIntent, mServiceConnection, BIND_AUTO_CREATE);
+//        startService(playIntent);
     }
 
     @Override
@@ -244,8 +223,6 @@ public class MainActivity extends ActionBarActivity {
             if (convertView == null) {
                 convertView = getLayoutInflater().inflate(R.layout.song_item, parent, false);
             }
-            ((TextView) convertView.findViewById(R.id.song_name))
-                    .setText(mSongs.get(position).getArtist());
             return convertView;
         }
     }
