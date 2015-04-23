@@ -10,23 +10,23 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
-    <LinearLayout
-            android:orientation="horizontal"
-            android:background="@color/play_bar_background"
-            android:layout_alignParentBottom="true"
-            android:padding="5dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+    <LinearLayout android:id="@+id/play_bar_controls"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal"
+                  android:padding="10dp"
+                  android:layout_alignParentBottom="true"
+                  android:background="@color/play_bar_background">
 
         <ImageView android:id="@+id/song_image"
                    android:scaleType="centerCrop"
                    android:src="@drawable/placebo"
                    android:layout_width="wrap_content"
-                   android:layout_height="match_parent"/>
+                   android:layout_height="wrap_content"/>
 
         <LinearLayout android:orientation="vertical"
                       android:layout_width="match_parent"
-                      android:layout_height="wrap_content">
+                      android:layout_height="match_parent">
 
             <LinearLayout android:layout_weight="1"
                           android:gravity="center_horizontal"
@@ -66,7 +66,7 @@
                 <ImageButton android:id="@+id/play_pause"
                              android:layout_weight="1"
                              android:layout_gravity="center"
-                             android:src="@drawable/ic_action_play"
+                             android:background="@drawable/play_button_drawable"
                              android:layout_width="wrap_content"
                              android:layout_height="wrap_content"/>
 

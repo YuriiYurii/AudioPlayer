@@ -8,16 +8,21 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.IBinder;
+import android.os.RemoteCallbackList;
 import android.os.RemoteException;
+import android.util.Log;
 
 import java.io.IOException;
 
 /**
  * Created by yuriitsap on 17.04.15.
  */
-public class MusicService extends Service implements MediaPlayer.OnPreparedListener {
+public class MusicService extends Service
+        implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
     private MediaPlayer mMediaPlayer;
+    private RemoteCallbackList<IAsyncCallback> mIAsyncCallbackRemoteCallbackList
+            = new RemoteCallbackList<>();
     private IMyAidlInterface.Stub mStub = new IMyAidlInterface.Stub() {
         @Override
         public void play(String uri) throws RemoteException {
@@ -44,6 +49,16 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
         @Override
         public void pause() throws RemoteException {
             mMediaPlayer.pause();
+        }
+
+        @Override
+        public void registerCallback(IAsyncCallback callback) throws RemoteException {
+            mIAsyncCallbackRemoteCallbackList.register(callback);
+        }
+
+        @Override
+        public void unRegisterCallback(IAsyncCallback callback) throws RemoteException {
+
         }
 
         @Override
@@ -93,6 +108,15 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onPrepared(MediaPlayer mp) {
         mp.start();
+        try {
+            for (int i = mIAsyncCallbackRemoteCallbackList.beginBroadcast() - 1; i >= 0; i--) {
+                mIAsyncCallbackRemoteCallbackList.getBroadcastItem(i).playbackStarted();
+            }
+            mIAsyncCallbackRemoteCallbackList.finishBroadcast();
+
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
 
         Intent notIntent = new Intent(this, MainActivity.class);
         notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -108,5 +132,17 @@ public class MusicService extends Service implements MediaPlayer.OnPreparedListe
                 .setContentText("First");
         Notification not = builder.build();
         startForeground(1, not);
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        for (int i = mIAsyncCallbackRemoteCallbackList.beginBroadcast(); i >= 0; i--) {
+            try {
+                mIAsyncCallbackRemoteCallbackList.getBroadcastItem(i).playbackEnded();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+        mIAsyncCallbackRemoteCallbackList.finishBroadcast();
     }
 }

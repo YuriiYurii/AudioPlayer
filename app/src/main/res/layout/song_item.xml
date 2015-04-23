@@ -2,11 +2,12 @@
 <android.support.v7.widget.CardView
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="horizontal"
         app:cardUseCompatPadding="true">
     <LinearLayout android:orientation="horizontal"
+                  android:background="@drawable/row_state_drawable"
                   android:layout_width="match_parent"
                   android:layout_height="match_parent">
 
@@ -17,17 +18,10 @@
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content">
 
-            <TextView android:id="@+id/song_artist"
+            <TextView android:id="@+id/song_description"
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"/>
 
-            <TextView android:id="@+id/song_title"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"/>
-
-            <TextView android:id="@+id/song_duration"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"/>
         </LinearLayout>
 
 

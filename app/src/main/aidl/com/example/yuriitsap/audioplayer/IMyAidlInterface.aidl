@@ -2,7 +2,7 @@
 package com.example.yuriitsap.audioplayer;
 
 // Declare any non-default types here with import statements
-
+import com.example.yuriitsap.audioplayer.IAsyncCallback;
 interface IMyAidlInterface {
     /**
      * Demonstrates some basic types that you can use as parameters
@@ -15,4 +15,6 @@ interface IMyAidlInterface {
      void seekTo(int position);
      int getCurrentPosition();
      int getDuration();
+     void registerCallback(IAsyncCallback callback);
+     void unRegisterCallback(IAsyncCallback callback);
 }

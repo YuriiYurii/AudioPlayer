@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.BaseColumns;
+
 import java.util.Random;
 
 /**
@@ -31,6 +32,8 @@ public class AudioProvider extends ContentProvider {
     private static final UriMatcher URI_MATCHER;
     private SQLiteDatabase mSQLiteDatabase;
     private SQLiteOpenHelper mSQLiteOpenHelper;
+    private final int mImages[] = {R.drawable.placebo, R.drawable.ac_dc,
+            R.drawable.arctic_monkeys, R.drawable.johny_cash};
 
     static {
         URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
@@ -125,7 +128,7 @@ public class AudioProvider extends ContentProvider {
                 insert.bindString(2, "Stepan Giga N#" + i);
                 insert.bindLong(3, i * 60);
                 insert.bindLong(4,
-                        MainActivity.mImages[random.nextInt(MainActivity.mImages.length - 1)]);
+                        mImages[random.nextInt(mImages.length - 1)]);
                 insert.execute();
             }
             db.setTransactionSuccessful();

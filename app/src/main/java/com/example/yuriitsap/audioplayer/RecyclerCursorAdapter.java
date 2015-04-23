@@ -15,9 +15,11 @@ public class RecyclerCursorAdapter
         extends RecyclerView.Adapter<RecyclerCursorAdapter.SongViewHolder> {
 
     private Cursor mCursor;
+    private OnRowClickedCallBack mOnRowClickedCallBack;
 
-    public RecyclerCursorAdapter(Cursor cursor) {
+    public RecyclerCursorAdapter(Cursor cursor, OnRowClickedCallBack onRowClickedCallBack) {
         mCursor = cursor;
+        mOnRowClickedCallBack = onRowClickedCallBack;
     }
 
     @Override
@@ -29,9 +31,9 @@ public class RecyclerCursorAdapter
     @Override
     public void onBindViewHolder(SongViewHolder holder, int position) {
         mCursor.moveToPosition(position);
-        holder.mSongArtist.setText(mCursor.getString(1));
-        holder.mSongTitle.setText(mCursor.getString(2));
-        holder.mSongDuration.setText(String.valueOf(mCursor.getLong(3)));
+        holder.mSongDescription.setText(
+                mCursor.getString(1) + "\n" + mCursor.getString(2) + "\n" + String
+                        .valueOf(mCursor.getLong(3)));
         holder.mSongImage.setImageResource(mCursor.getInt(4));
     }
 
@@ -40,19 +42,29 @@ public class RecyclerCursorAdapter
         return mCursor.getCount();
     }
 
-    public class SongViewHolder extends RecyclerView.ViewHolder {
+    public class SongViewHolder extends RecyclerView.ViewHolder implements
+            View.OnClickListener {
 
         public ImageView mSongImage;
-        public TextView mSongArtist;
-        public TextView mSongTitle;
-        public TextView mSongDuration;
+        public TextView mSongDescription;
 
         public SongViewHolder(View itemView) {
             super(itemView);
+
             mSongImage = (ImageView) itemView.findViewById(R.id.song_image);
-            mSongArtist = (TextView) itemView.findViewById(R.id.song_artist);
-            mSongTitle = (TextView) itemView.findViewById(R.id.song_title);
-            mSongDuration = (TextView) itemView.findViewById(R.id.song_duration);
+            mSongDescription = (TextView) itemView.findViewById(R.id.song_description);
+            itemView.setOnClickListener(this);
+            itemView.setActivated(true);
         }
+
+        @Override
+        public void onClick(View v) {
+            mOnRowClickedCallBack.onHolderClicked(getPosition());
+        }
+    }
+
+    public interface OnRowClickedCallBack {
+
+        void onHolderClicked(int position);
     }
 }

@@ -1,8 +1,10 @@
 package com.example.yuriitsap.audioplayer;
 
 import android.content.ComponentName;
+import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -13,42 +15,60 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.util.Calendar;
 import java.util.Formatter;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Locale;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity
+        implements SeekBar.OnSeekBarChangeListener, RecyclerCursorAdapter.OnRowClickedCallBack {
 
-    private static final int SHOW_CONTROLS = 1;
+    //messages
+    private static final int UPDATE_PLAY_PAUSE = 1;
     private static final int UPDATE_PROGRESS = 2;
-    public static final int mImages[] = {R.drawable.placebo, R.drawable.ac_dc,
-            R.drawable.arctic_monkeys, R.drawable.johny_cash};
-
-    private IMyAidlInterface mIMyAidlInterface;
-    private List<Song> mSongs;
-    private LinearLayout mControlls;
-    private TextView mSongDescription;
+    //controlls
+    private View mControls;
+    private ImageView mSongImage;
+    private TextView mArtist, mTitle;
+    private ImageButton mPlayPause, mPrevious, mNext;
     private TextView mDuration, mCurrentTime;
     private SeekBar mProgess;
-    private ImageButton mPlayPause;
-    private int mCurrentSongPosition = -1;
-    private boolean mControllsVisible;
-    private boolean mUserDragging;
     private RecyclerView mRecyclerView;
+    Calendar c = Calendar.getInstance();
+
+    private IMyAidlInterface mIMyAidlInterface;
+    private boolean mUserDragging;
     private StringBuilder mCurrentTimeFormatter = new StringBuilder();
     private Formatter mFormatter;
+    private Cursor mCursor;
+    private int mCurrentPosition = -1;
+    private IAsyncCallback.Stub mStub = new IAsyncCallback.Stub() {
+
+        @Override
+        public void playbackStarted() throws RemoteException {
+            mHandler.sendEmptyMessage(UPDATE_PLAY_PAUSE);
+            mHandler.sendEmptyMessage(UPDATE_PROGRESS);
+        }
+
+        @Override
+        public void playbackEnded() throws RemoteException {
+
+        }
+    };
     private ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mIMyAidlInterface = IMyAidlInterface.Stub.asInterface(service);
+            try {
+                mIMyAidlInterface = IMyAidlInterface.Stub.asInterface(service);
+                mIMyAidlInterface.registerCallback(mStub);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -62,36 +82,33 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        Cursor cursor = getContentResolver()
+        mCursor = getContentResolver()
                 .query(AudioProvider.PLAYLIST_CONTENT_URI, null, null, null, "");
         mRecyclerView = (RecyclerView) findViewById(R.id.playlist);
-        mRecyclerView.setAdapter(new RecyclerCursorAdapter(cursor));
+        mRecyclerView.setAdapter(new RecyclerCursorAdapter(mCursor, this));
         mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-//        initPlaylist();
-//        initControls();
-//        mFormatter = new Formatter(mCurrentTimeFormatter, Locale.getDefault());
-//        Intent playIntent = new Intent(this, MusicService.class);
-//        bindService(playIntent, mServiceConnection, BIND_AUTO_CREATE);
-//        startService(playIntent);
+        initPlaybarControls();
+        mFormatter = new Formatter(mCurrentTimeFormatter, Locale.getDefault());
+        Intent playIntent = new Intent(this, MusicService.class);
+        startService(playIntent);
+        bindService(playIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (mIMyAidlInterface != null) {
-            show(3000);
-        }
-    }
 
-    private void initControls() {
-        mProgess = (SeekBar) findViewById(R.id.song_progress);
-        mProgess.setMax(1000);
-        mProgess.setOnSeekBarChangeListener(new ProgressListener());
-//        mSongDescription = (TextView) findViewById(R.id.song_description);
-        mDuration = (TextView) findViewById(R.id.song_duration_time);
-        mCurrentTime = (TextView) findViewById(R.id.current_song_time);
-//        mControlls = (LinearLayout) findViewById(R.id.play_controls);
+    private void initPlaybarControls() {
+        mControls = findViewById(R.id.play_bar_controls);
+        mSongImage = (ImageView) findViewById(R.id.song_image);
+        mArtist = (TextView) findViewById(R.id.song_artist);
+        mTitle = (TextView) findViewById(R.id.song_title);
+        mPrevious = (ImageButton) findViewById(R.id.next);
         mPlayPause = (ImageButton) findViewById(R.id.play_pause);
+        mNext = (ImageButton) findViewById(R.id.next);
+        mCurrentTime = (TextView) findViewById(R.id.current_song_time);
+        mDuration = (TextView) findViewById(R.id.song_duration_time);
+        mProgess = (SeekBar) findViewById(R.id.song_progress);
+
+        mProgess.setMax(1000);
+        mProgess.setOnSeekBarChangeListener(this);
         mPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -100,49 +117,20 @@ public class MainActivity extends ActionBarActivity {
         });
     }
 
-    private void initPlaylist() {
-        mSongs = new LinkedList<>();
-        for (int i = 40; i > 0; i--) {
-            mSongs.add(new Song(R.raw.first).setDuration(200).setArtist("Song N" + i));
-        }
-    }
 
-    public void show(int timeout) {
-        if (!mControllsVisible) {
-            updateProgress();
-            mControlls.setVisibility(View.VISIBLE);
-            mControllsVisible = true;
-        }
-        updatePlayButton();
-        mHandler.sendEmptyMessage(UPDATE_PROGRESS);
-
-        Message msg = mHandler.obtainMessage(SHOW_CONTROLS);
-        if (timeout != 0) {
-            mHandler.removeMessages(SHOW_CONTROLS);
-            mHandler.sendMessageDelayed(msg, timeout);
-        }
-    }
-
-    public void hide() {
-        if (mControllsVisible) {
-            mHandler.removeMessages(UPDATE_PROGRESS);
-            mControlls.setVisibility(View.GONE);
-            mControllsVisible = false;
-        }
-    }
-
-    private  Handler mHandler = new Handler() {
+    private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             int pos;
             switch (msg.what) {
-                case SHOW_CONTROLS:
-                    hide();
+                case UPDATE_PLAY_PAUSE:
+//                    Log.e("TAG", "Updating button");
+                    updatePlayButton();
                     break;
                 case UPDATE_PROGRESS:
                     pos = updateProgress();
                     try {
-                        if (!mUserDragging && mControllsVisible && mIMyAidlInterface.isPlaying()) {
+                        if (!mUserDragging && mIMyAidlInterface.isPlaying()) {
                             msg = obtainMessage(UPDATE_PROGRESS);
                             sendMessageDelayed(msg, 1000 - (pos % 1000));
                         }
@@ -155,13 +143,17 @@ public class MainActivity extends ActionBarActivity {
     };
 
     private void doPlayPause() {
+
+        int seconds = c.get(Calendar.SECOND);
         try {
             if (mIMyAidlInterface != null && mIMyAidlInterface.isPlaying()) {
+
                 mIMyAidlInterface.pause();
             } else {
                 mIMyAidlInterface.start();
             }
-            updatePlayButton();
+            mHandler.sendEmptyMessage(UPDATE_PLAY_PAUSE);
+            mHandler.sendEmptyMessage(UPDATE_PROGRESS);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -169,10 +161,11 @@ public class MainActivity extends ActionBarActivity {
 
     private void updatePlayButton() {
         try {
+            Log.e("tag", "is playing activity = " + mIMyAidlInterface.isPlaying());
             if (mIMyAidlInterface != null && mIMyAidlInterface.isPlaying()) {
-                mPlayPause.setImageResource(R.drawable.ic_action_pause);
+                mPlayPause.setSelected(true);
             } else {
-                mPlayPause.setImageResource(R.drawable.ic_action_play);
+                mPlayPause.setSelected(false);
             }
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -202,61 +195,52 @@ public class MainActivity extends ActionBarActivity {
         return mFormatter.format("%02d:%02d", minutes, seconds).toString();
     }
 
-    private class ListViewAdapter extends BaseAdapter {
-
-        @Override
-        public int getCount() {
-            return mSongs.size();
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if (!fromUser) {
+            return;
         }
-
-        @Override
-        public Object getItem(int position) {
-            return mSongs.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return mSongs.get(position).getId();
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = getLayoutInflater().inflate(R.layout.song_item, parent, false);
-            }
-            return convertView;
+        try {
+            int duration = mIMyAidlInterface.getDuration();
+            long tempPosition = (progress * duration) / 1000L;
+            mIMyAidlInterface.seekTo((int) tempPosition);
+            mCurrentTime.setText(formatTime((int) tempPosition));
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 
-    private class ProgressListener implements SeekBar.OnSeekBarChangeListener {
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+        mUserDragging = true;
+    }
 
-        @Override
-        public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if (!fromUser) {
-                return;
-            }
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        mUserDragging = false;
+    }
+
+    @Override
+    public void onHolderClicked(int position) {
+        if (mIMyAidlInterface != null) {
             try {
-                int duration = mIMyAidlInterface.getDuration();
-                Log.e("TAG", "duration = " + duration);
-                long tempPosition = (progress * duration) / 1000L;
-                Log.e("TAG", "tempPosition = " + tempPosition);
-                mIMyAidlInterface.seekTo((int) tempPosition);
-                mCurrentTime.setText(formatTime((int) tempPosition));
+                if (mCurrentPosition != position) {
+                    Log.e("TAG", "requested");
+                    mIMyAidlInterface.play(getSongUri());
+                    mCurrentPosition = position;
+                    return;
+                }
+                doPlayPause();
+
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
         }
+    }
 
-        @Override
-        public void onStartTrackingTouch(SeekBar seekBar) {
-            mUserDragging = true;
-            show(120000);
-        }
-
-        @Override
-        public void onStopTrackingTouch(SeekBar seekBar) {
-            mUserDragging = false;
-            show(5000);
-        }
+    private String getSongUri() {
+        return Uri.parse("android.resource://com.example.yuriitsap.audioplayer/" + String
+                .valueOf(R.raw.first))
+                .toString();
     }
 }
