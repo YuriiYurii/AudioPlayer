@@ -29,10 +29,10 @@ public class RecyclerCursorAdapter
     @Override
     public void onBindViewHolder(SongViewHolder holder, int position) {
         mCursor.moveToPosition(position);
-        holder.mSongImage.setImageResource(R.drawable.placeholder);
         holder.mSongArtist.setText(mCursor.getString(1));
         holder.mSongTitle.setText(mCursor.getString(2));
         holder.mSongDuration.setText(String.valueOf(mCursor.getLong(3)));
+        holder.mSongImage.setImageResource(mCursor.getInt(4));
     }
 
     @Override

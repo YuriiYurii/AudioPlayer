@@ -21,6 +21,7 @@ public class Song implements Parcelable {
     };
 
     private int mId;
+    private int mImageId;
     private String mArtist;
     private String mTitle;
     private int mDuration;
@@ -31,6 +32,7 @@ public class Song implements Parcelable {
 
     public Song(Parcel source) {
         mId = source.readInt();
+        mImageId = source.readInt();
         mDuration = source.readInt();
         mArtist = source.readString();
         mTitle = source.readString();
@@ -71,6 +73,14 @@ public class Song implements Parcelable {
         return this;
     }
 
+    public int getImageId() {
+        return mImageId;
+    }
+
+    public void setImageId(int imageId) {
+        mImageId = imageId;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -79,6 +89,7 @@ public class Song implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(mId);
+        dest.writeInt(mImageId);
         dest.writeInt(mDuration);
         dest.writeString(mArtist);
         dest.writeString(mTitle);

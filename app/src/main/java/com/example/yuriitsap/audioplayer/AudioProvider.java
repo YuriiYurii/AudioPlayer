@@ -12,7 +12,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.util.Log;
+import java.util.Random;
 
 /**
  * Created by yuriitsap on 21.04.15.
@@ -35,7 +35,6 @@ public class AudioProvider extends ContentProvider {
     static {
         URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
         URI_MATCHER.addURI(AUTHORITY, AudioContract.ALL_ITEMS_PLAYLIST, ITEM_LIST);
-
     }
 
     public static class AudioContract implements BaseColumns {
@@ -46,12 +45,14 @@ public class AudioProvider extends ContentProvider {
         public static final String ARTIST = "artist";
         public static final String TITLE = "title";
         public static final String DURATION = "duration";
+        public static final String IMAGE_ID = "image_id";
         public static final String CREATE_PLAYLIST_TABLE = "CREATE TABLE "
                 + TABLE_NAME + "(" + _ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 ARTIST + " TEXT," +
                 TITLE + " TEXT," +
-                DURATION + " REAL)";
-        public static final int DATABASE_VERSION = 1;
+                DURATION + " REAL," +
+                IMAGE_ID + " REAL)";
+        public static final int DATABASE_VERSION = 3;
     }
 
 
@@ -66,10 +67,12 @@ public class AudioProvider extends ContentProvider {
             String sortOrder) {
         mSQLiteDatabase = mSQLiteOpenHelper.getReadableDatabase();
         SQLiteQueryBuilder sqLiteQueryBuilder = new SQLiteQueryBuilder();
+
         switch (URI_MATCHER.match(uri)) {
             case ITEM_LIST:
                 sqLiteQueryBuilder.setTables(AudioContract.TABLE_NAME);
         }
+
         Cursor cursor = sqLiteQueryBuilder
                 .query(mSQLiteDatabase, projection, selection, selectionArgs, null, null,
                         sortOrder);
@@ -105,7 +108,7 @@ public class AudioProvider extends ContentProvider {
     private class MyDatabaseHelper extends SQLiteOpenHelper {
 
         private static final String INSERT_STATEMENT
-                = "Insert into playlist (artist,title,duration) values(?,?,?)";
+                = "Insert into playlist (artist,title,duration,image_id) values(?,?,?,?)";
 
         public MyDatabaseHelper(Context context) {
             super(context, AudioContract.DATABASE_NAME, null, AudioContract.DATABASE_VERSION);
@@ -113,6 +116,7 @@ public class AudioProvider extends ContentProvider {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
+            Random random = new Random();
             db.execSQL(AudioContract.CREATE_PLAYLIST_TABLE);
             SQLiteStatement insert = db.compileStatement(INSERT_STATEMENT);
             db.beginTransaction();
@@ -120,6 +124,8 @@ public class AudioProvider extends ContentProvider {
                 insert.bindString(1, "Stepan Giga N#" + i);
                 insert.bindString(2, "Stepan Giga N#" + i);
                 insert.bindLong(3, i * 60);
+                insert.bindLong(4,
+                        MainActivity.mImages[random.nextInt(MainActivity.mImages.length - 1)]);
                 insert.execute();
             }
             db.setTransactionSuccessful();

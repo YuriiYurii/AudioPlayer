@@ -1,7 +1,6 @@
 package com.example.yuriitsap.audioplayer;
 
 import android.content.ComponentName;
-import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -24,13 +23,15 @@ import android.widget.TextView;
 import java.util.Formatter;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 
 
 public class MainActivity extends ActionBarActivity {
 
     private static final int SHOW_CONTROLS = 1;
     private static final int UPDATE_PROGRESS = 2;
+    public static final int mImages[] = {R.drawable.placebo, R.drawable.ac_dc,
+            R.drawable.arctic_monkeys, R.drawable.johny_cash};
+
     private IMyAidlInterface mIMyAidlInterface;
     private List<Song> mSongs;
     private LinearLayout mControlls;
@@ -86,10 +87,10 @@ public class MainActivity extends ActionBarActivity {
         mProgess = (SeekBar) findViewById(R.id.song_progress);
         mProgess.setMax(1000);
         mProgess.setOnSeekBarChangeListener(new ProgressListener());
-        mSongDescription = (TextView) findViewById(R.id.song_description);
+//        mSongDescription = (TextView) findViewById(R.id.song_description);
         mDuration = (TextView) findViewById(R.id.song_duration_time);
         mCurrentTime = (TextView) findViewById(R.id.current_song_time);
-        mControlls = (LinearLayout) findViewById(R.id.play_controls);
+//        mControlls = (LinearLayout) findViewById(R.id.play_controls);
         mPlayPause = (ImageButton) findViewById(R.id.play_pause);
         mPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -130,7 +131,7 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    private Handler mHandler = new Handler() {
+    private  Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             int pos;
