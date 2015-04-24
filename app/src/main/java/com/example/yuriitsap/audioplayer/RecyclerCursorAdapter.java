@@ -1,12 +1,18 @@
 package com.example.yuriitsap.audioplayer;
 
-import android.database.Cursor;
+import android.graphics.Typeface;
 import android.support.v7.widget.RecyclerView;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.StyleSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.util.List;
 
 /**
  * Created by yuriitsap on 22.04.15.
@@ -14,12 +20,13 @@ import android.widget.TextView;
 public class RecyclerCursorAdapter
         extends RecyclerView.Adapter<RecyclerCursorAdapter.SongViewHolder> {
 
-    private Cursor mCursor;
     private OnRowClickedCallBack mOnRowClickedCallBack;
+    private List<Song> mPlaylist;
 
-    public RecyclerCursorAdapter(Cursor cursor, OnRowClickedCallBack onRowClickedCallBack) {
-        mCursor = cursor;
+    public RecyclerCursorAdapter(List<Song> playlist,
+            OnRowClickedCallBack onRowClickedCallBack) {
         mOnRowClickedCallBack = onRowClickedCallBack;
+        mPlaylist = playlist;
     }
 
     @Override
@@ -30,16 +37,20 @@ public class RecyclerCursorAdapter
 
     @Override
     public void onBindViewHolder(SongViewHolder holder, int position) {
-        mCursor.moveToPosition(position);
-        holder.mSongDescription.setText(
-                mCursor.getString(1) + "\n" + mCursor.getString(2) + "\n" + String
-                        .valueOf(mCursor.getLong(3)));
-        holder.mSongImage.setImageResource(mCursor.getInt(4));
+        StringBuilder stringBuilder = new StringBuilder(mPlaylist.get(position).getTitle())
+                .append("\n").append(mPlaylist.get(position).getArtist()).append("\n")
+                .append(mPlaylist.get(position).getDuration());
+        Log.e("TAG", "indexOf = " + stringBuilder.indexOf((String.valueOf(mPlaylist.get(position).getDuration()))));
+        Spannable spannable = new SpannableStringBuilder(stringBuilder);
+        StyleSpan titleStyle = new StyleSpan(Typeface.BOLD);
+        StyleSpan artistStyle = new StyleSpan(Typeface.ITALIC);
+        holder.mSongDescription.setText(stringBuilder.toString());
+        holder.mSongImage.setImageResource(mPlaylist.get(position).getImageId());
     }
 
     @Override
     public int getItemCount() {
-        return mCursor.getCount();
+        return mPlaylist.size();
     }
 
     public class SongViewHolder extends RecyclerView.ViewHolder implements

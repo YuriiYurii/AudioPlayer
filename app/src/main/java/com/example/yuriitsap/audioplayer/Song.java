@@ -1,11 +1,15 @@
 package com.example.yuriitsap.audioplayer;
 
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+
 import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
  * Created by yuriitsap on 17.04.15.
  */
+@DatabaseTable(tableName = "playlist")
 public class Song implements Parcelable {
 
     public static final Creator<Song> CREATOR = new Creator<Song>() {
@@ -20,10 +24,18 @@ public class Song implements Parcelable {
         }
     };
 
+    public Song() {
+    }
+
+    @DatabaseField(generatedId = true,columnName = "_id")
     private int mId;
+    @DatabaseField(columnName = "image_id")
     private int mImageId;
+    @DatabaseField(columnName = "artist")
     private String mArtist;
+    @DatabaseField(columnName = "title")
     private String mTitle;
+    @DatabaseField(columnName = "duration")
     private int mDuration;
 
     public Song(int id) {

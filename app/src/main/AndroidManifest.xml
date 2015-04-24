@@ -9,10 +9,12 @@
             android:theme="@style/AppTheme">
         <provider android:authorities="com.example.yuriitsap.audioplayer.AudioProvider"
                   android:name=".AudioProvider"
+                  android:process=":provider"
                   android:grantUriPermissions="true"
                   android:exported="true"
-                  android:readPermission="de.openminds.samples.cpsample.lentitems.READ"
-                  android:writePermission="de.openminds.samples.cpsample.lentitems.WRITE">
+                  android:enabled="true"
+                  android:readPermission="com.example.yuriitsap.READ"
+                  android:writePermission="com.example.yuriitsap.WRITE">
         </provider>
         <activity
                 android:name=".MainActivity"
@@ -25,7 +27,7 @@
             </intent-filter>
         </activity>
         <service android:name=".MusicService" android:exported="true"
-                 android:process=":remote"></service>
+                 android:process=":audio"></service>
 
     </application>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"></uses-permission>

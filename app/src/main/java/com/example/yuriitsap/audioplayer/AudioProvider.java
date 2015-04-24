@@ -1,5 +1,10 @@
 package com.example.yuriitsap.audioplayer;
 
+import com.j256.ormlite.android.AndroidDatabaseResults;
+import com.j256.ormlite.dao.CloseableIterator;
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.QueryBuilder;
+
 import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -8,11 +13,12 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.util.Log;
 
+import java.sql.SQLException;
 import java.util.Random;
 
 /**
@@ -30,8 +36,7 @@ public class AudioProvider extends ContentProvider {
             + "/vnd.yuriitsap.audio/songs";
     private static final int ITEM_LIST = 1;
     private static final UriMatcher URI_MATCHER;
-    private SQLiteDatabase mSQLiteDatabase;
-    private SQLiteOpenHelper mSQLiteOpenHelper;
+    private OrmLiteDatabaseHelper mOrmLiteDatabaseHelper;
     private final int mImages[] = {R.drawable.placebo, R.drawable.ac_dc,
             R.drawable.arctic_monkeys, R.drawable.johny_cash};
 
@@ -61,25 +66,29 @@ public class AudioProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        mSQLiteOpenHelper = new MyDatabaseHelper(getContext());
+        mOrmLiteDatabaseHelper = OrmLiteDatabaseHelper.getInstance(getContext());
+        Log.e("TAG", " content provider = " + mOrmLiteDatabaseHelper.toString());
         return true;
     }
 
     @Override
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
             String sortOrder) {
-        mSQLiteDatabase = mSQLiteOpenHelper.getReadableDatabase();
-        SQLiteQueryBuilder sqLiteQueryBuilder = new SQLiteQueryBuilder();
+        Dao<Song, Integer> songIntegerDao = mOrmLiteDatabaseHelper.getSongDao();
+        QueryBuilder<Song, Integer> builder = songIntegerDao.queryBuilder();
+        CloseableIterator<Song> iterator = null;
+        Cursor cursor = null;
 
         switch (URI_MATCHER.match(uri)) {
             case ITEM_LIST:
-                sqLiteQueryBuilder.setTables(AudioContract.TABLE_NAME);
+                try {
+                    iterator = songIntegerDao.iterator(builder.prepare());
+                    cursor = ((AndroidDatabaseResults) iterator.getRawResults()).getRawCursor();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
         }
 
-        Cursor cursor = sqLiteQueryBuilder
-                .query(mSQLiteDatabase, projection, selection, selectionArgs, null, null,
-                        sortOrder);
-        cursor.setNotificationUri(getContext().getContentResolver(), uri);
         return cursor;
     }
 
@@ -142,4 +151,46 @@ public class AudioProvider extends ContentProvider {
 
         }
     }
+
+//    public static class OrmLiteDatabaseHelper extends OrmLiteSqliteOpenHelper {
+//
+//        private Dao<Song, Integer> mSongDao = null;
+//
+//        public OrmLiteDatabaseHelper(Context context) {
+//            super(context, AudioContract.DATABASE_NAME, null, AudioContract.DATABASE_VERSION);
+//        }
+//
+//        @Override
+//        public void onCreate(SQLiteDatabase database, ConnectionSource connectionSource) {
+//            try {
+//                TableUtils.createTable(connectionSource, Song.class);
+//            } catch (SQLException e) {
+//                e.printStackTrace();
+//            }
+//
+//        }
+//
+//        @Override
+//        public void onUpgrade(SQLiteDatabase database, ConnectionSource connectionSource,
+//                int oldVersion, int newVersion) {
+//            try {
+//                TableUtils.dropTable(connectionSource, Song.class, true);
+//                onCreate(database, connectionSource);
+//            } catch (SQLException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        public Dao<Song, Integer> getSongDao() {
+//            if (mSongDao == null) {
+//                try {
+//                    mSongDao = getDao(Song.class);
+//                } catch (SQLException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//            return mSongDao;
+//        }
+//
+//    }
 }

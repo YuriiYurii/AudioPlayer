@@ -1,9 +1,10 @@
 package com.example.yuriitsap.audioplayer;
 
+import com.j256.ormlite.dao.Dao;
+
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,6 +14,8 @@ import android.os.RemoteException;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
@@ -20,8 +23,9 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import java.util.Calendar;
+import java.sql.SQLException;
 import java.util.Formatter;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -34,19 +38,20 @@ public class MainActivity extends ActionBarActivity
     //controlls
     private View mControls;
     private ImageView mSongImage;
-    private TextView mArtist, mTitle;
+    private TextView mSongDescription;
     private ImageButton mPlayPause, mPrevious, mNext;
     private TextView mDuration, mCurrentTime;
     private SeekBar mProgess;
     private RecyclerView mRecyclerView;
-    Calendar c = Calendar.getInstance();
 
     private IMyAidlInterface mIMyAidlInterface;
     private boolean mUserDragging;
-    private StringBuilder mCurrentTimeFormatter = new StringBuilder();
     private Formatter mFormatter;
-    private Cursor mCursor;
     private int mCurrentPosition = -1;
+    private Dao<Song, Integer> mSongDao;
+    private List<Song> mPlaylist;
+    private OrmLiteDatabaseHelper mOrmLiteDatabaseHelper;
+    private StringBuilder mCurrentTimeFormatter = new StringBuilder();
     private IAsyncCallback.Stub mStub = new IAsyncCallback.Stub() {
 
         @Override
@@ -82,10 +87,16 @@ public class MainActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        mCursor = getContentResolver()
-                .query(AudioProvider.PLAYLIST_CONTENT_URI, null, null, null, "");
+        mOrmLiteDatabaseHelper = OrmLiteDatabaseHelper.getInstance(MainActivity.this);
+        getContentResolver().query(AudioProvider.PLAYLIST_CONTENT_URI, null, null, null, null);
+        Log.e("TAG", " activity = " + mOrmLiteDatabaseHelper.toString());
+        try {
+            mPlaylist = mOrmLiteDatabaseHelper.getSongDao().queryForAll();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         mRecyclerView = (RecyclerView) findViewById(R.id.playlist);
-        mRecyclerView.setAdapter(new RecyclerCursorAdapter(mCursor, this));
+        mRecyclerView.setAdapter(new RecyclerCursorAdapter(mPlaylist, this));
         mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
         initPlaybarControls();
         mFormatter = new Formatter(mCurrentTimeFormatter, Locale.getDefault());
@@ -98,8 +109,8 @@ public class MainActivity extends ActionBarActivity
     private void initPlaybarControls() {
         mControls = findViewById(R.id.play_bar_controls);
         mSongImage = (ImageView) findViewById(R.id.song_image);
-        mArtist = (TextView) findViewById(R.id.song_artist);
-        mTitle = (TextView) findViewById(R.id.song_title);
+        mSongDescription = (TextView) findViewById(R.id.song_description);
+        mSongDescription.setMovementMethod(new ScrollingMovementMethod());
         mPrevious = (ImageButton) findViewById(R.id.next);
         mPlayPause = (ImageButton) findViewById(R.id.play_pause);
         mNext = (ImageButton) findViewById(R.id.next);
@@ -124,7 +135,6 @@ public class MainActivity extends ActionBarActivity
             int pos;
             switch (msg.what) {
                 case UPDATE_PLAY_PAUSE:
-//                    Log.e("TAG", "Updating button");
                     updatePlayButton();
                     break;
                 case UPDATE_PROGRESS:
@@ -144,7 +154,6 @@ public class MainActivity extends ActionBarActivity
 
     private void doPlayPause() {
 
-        int seconds = c.get(Calendar.SECOND);
         try {
             if (mIMyAidlInterface != null && mIMyAidlInterface.isPlaying()) {
 
@@ -228,6 +237,7 @@ public class MainActivity extends ActionBarActivity
                     Log.e("TAG", "requested");
                     mIMyAidlInterface.play(getSongUri());
                     mCurrentPosition = position;
+                    updateSongInfo(mPlaylist.get(position));
                     return;
                 }
                 doPlayPause();
@@ -236,6 +246,12 @@ public class MainActivity extends ActionBarActivity
                 e.printStackTrace();
             }
         }
+    }
+
+    private void updateSongInfo(Song song) {
+        mSongImage.setImageResource(song.getImageId());
+        mSongDescription.setText(song.getArtist() + " - " + song.getTitle());
+
     }
 
     private String getSongUri() {
