@@ -70,6 +70,11 @@ public class MusicService extends Service
         }
 
         @Override
+        public boolean isLooping() throws RemoteException {
+            return mMediaPlayer.isLooping();
+        }
+
+        @Override
         public void seekTo(int position) throws RemoteException {
             mMediaPlayer.seekTo(position);
         }

@@ -69,6 +69,12 @@ public class MainActivity extends ActionBarActivity
             try {
                 mIMyAidlInterface = IMyAidlInterface.Stub.asInterface(service);
                 mIMyAidlInterface.registerCallback(mStub);
+                if (mIMyAidlInterface.isPlaying()) {
+                    Log.e("TAG", "playing");
+                }
+                if (mIMyAidlInterface.isLooping()){
+                    Log.e("TAG", "looping");
+                }
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -254,6 +260,8 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     public void onHolderClicked(int position) {
+        mSongImage.setAlpha(0.5f);
+        mSongImage.animate().alpha(1.0f);
         if (mIMyAidlInterface != null) {
             if (mCurrentPosition != position) {
                 Log.e("TAG", "requested");
@@ -281,7 +289,7 @@ public class MainActivity extends ActionBarActivity
     }
 
     private void playNextSong() {
-        mCurrentPosition = ++mCurrentPosition == mPlaylist.size() - 1 ? 0 : mCurrentPosition;
+        mCurrentPosition = ++mCurrentPosition == mPlaylist.size() ? 0 : mCurrentPosition;
         playSong(getSongUri());
         updateSongInfo(mPlaylist.get(mCurrentPosition));
     }

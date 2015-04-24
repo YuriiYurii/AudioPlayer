@@ -15,6 +15,7 @@ interface IMyAidlInterface {
      void seekTo(int position);
      int getCurrentPosition();
      int getDuration();
+     boolean isLooping();
      void registerCallback(IAsyncCallback callback);
      void unRegisterCallback(IAsyncCallback callback);
 }
