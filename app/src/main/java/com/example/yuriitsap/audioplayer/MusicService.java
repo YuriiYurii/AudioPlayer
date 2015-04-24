@@ -22,7 +22,7 @@ public class MusicService extends Service
         implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
     private static final String STOP_MUSIC = "STOP_MUSIC";
-    private static final int NOTIFICATION_ID = 1;
+    private static final int NOTIFICATION_ID = 1256;
     private MediaPlayer mMediaPlayer;
     private RemoteCallbackList<IAsyncCallback> mIAsyncCallbackRemoteCallbackList
             = new RemoteCallbackList<>();
@@ -84,6 +84,7 @@ public class MusicService extends Service
     public void onCreate() {
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setOnPreparedListener(this);
+        mMediaPlayer.setOnCompletionListener(this);
     }
 
     @Override
@@ -137,7 +138,6 @@ public class MusicService extends Service
         builder.setContentIntent(pendInt)
                 .setSmallIcon(R.drawable.ic_action_play)
                 .setTicker("Lalala")
-                .setAutoCancel(false)
                 .setDeleteIntent(pendingIntent)
                 .setContentTitle("Playing")
                 .setContentText("First");
@@ -154,9 +154,10 @@ public class MusicService extends Service
                 e.printStackTrace();
             }
         }
+        mp.seekTo(0);
         mIAsyncCallbackRemoteCallbackList.finishBroadcast();
         NotificationManager notificationManager = (NotificationManager) getSystemService(
                 Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(NOTIFICATION_ID);
+        stopForeground(true);
     }
 }

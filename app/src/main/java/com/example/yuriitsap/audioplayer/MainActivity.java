@@ -1,7 +1,5 @@
 package com.example.yuriitsap.audioplayer;
 
-import com.j256.ormlite.dao.Dao;
-
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -103,6 +101,11 @@ public class MainActivity extends ActionBarActivity
         bindService(playIntent, mServiceConnection, BIND_AUTO_CREATE);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mServiceConnection);
+    }
 
     private void initPlaybarControls() {
         mControls = findViewById(R.id.play_bar_controls);
@@ -272,13 +275,13 @@ public class MainActivity extends ActionBarActivity
     }
 
     private void playPreviousSong() {
-        mCurrentPosition=--mCurrentPosition==-1?mPlaylist.size()-1:mCurrentPosition;
+        mCurrentPosition = --mCurrentPosition == -1 ? mPlaylist.size() - 1 : mCurrentPosition;
         playSong(getSongUri());
         updateSongInfo(mPlaylist.get(mCurrentPosition));
     }
 
     private void playNextSong() {
-        mCurrentPosition=++mCurrentPosition==mPlaylist.size()-1?0:mCurrentPosition;
+        mCurrentPosition = ++mCurrentPosition == mPlaylist.size() - 1 ? 0 : mCurrentPosition;
         playSong(getSongUri());
         updateSongInfo(mPlaylist.get(mCurrentPosition));
     }
