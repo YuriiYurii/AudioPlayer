@@ -8,18 +8,13 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteStatement;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import android.util.Log;
 
 import java.sql.SQLException;
-import java.util.Random;
 
 /**
  * Created by yuriitsap on 21.04.15.
@@ -60,7 +55,7 @@ public class AudioProvider extends ContentProvider {
                 TITLE + " TEXT," +
                 DURATION + " REAL," +
                 IMAGE_ID + " REAL)";
-        public static final int DATABASE_VERSION = 3;
+        public static final int DATABASE_VERSION = 4;
     }
 
 
@@ -116,81 +111,4 @@ public class AudioProvider extends ContentProvider {
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         return 0;
     }
-
-    private class MyDatabaseHelper extends SQLiteOpenHelper {
-
-        private static final String INSERT_STATEMENT
-                = "Insert into playlist (artist,title,duration,image_id) values(?,?,?,?)";
-
-        public MyDatabaseHelper(Context context) {
-            super(context, AudioContract.DATABASE_NAME, null, AudioContract.DATABASE_VERSION);
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-            Random random = new Random();
-            db.execSQL(AudioContract.CREATE_PLAYLIST_TABLE);
-            SQLiteStatement insert = db.compileStatement(INSERT_STATEMENT);
-            db.beginTransaction();
-            for (int i = 500; i > 0; i--) {
-                insert.bindString(1, "Stepan Giga N#" + i);
-                insert.bindString(2, "Stepan Giga N#" + i);
-                insert.bindLong(3, i * 60);
-                insert.bindLong(4,
-                        mImages[random.nextInt(mImages.length - 1)]);
-                insert.execute();
-            }
-            db.setTransactionSuccessful();
-            db.endTransaction();
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            db.execSQL("DROP TABLE IF EXISTS " + AudioContract.TABLE_NAME);
-            onCreate(db);
-
-        }
-    }
-
-//    public static class OrmLiteDatabaseHelper extends OrmLiteSqliteOpenHelper {
-//
-//        private Dao<Song, Integer> mSongDao = null;
-//
-//        public OrmLiteDatabaseHelper(Context context) {
-//            super(context, AudioContract.DATABASE_NAME, null, AudioContract.DATABASE_VERSION);
-//        }
-//
-//        @Override
-//        public void onCreate(SQLiteDatabase database, ConnectionSource connectionSource) {
-//            try {
-//                TableUtils.createTable(connectionSource, Song.class);
-//            } catch (SQLException e) {
-//                e.printStackTrace();
-//            }
-//
-//        }
-//
-//        @Override
-//        public void onUpgrade(SQLiteDatabase database, ConnectionSource connectionSource,
-//                int oldVersion, int newVersion) {
-//            try {
-//                TableUtils.dropTable(connectionSource, Song.class, true);
-//                onCreate(database, connectionSource);
-//            } catch (SQLException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        public Dao<Song, Integer> getSongDao() {
-//            if (mSongDao == null) {
-//                try {
-//                    mSongDao = getDao(Song.class);
-//                } catch (SQLException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//            return mSongDao;
-//        }
-//
-//    }
 }

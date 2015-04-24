@@ -20,7 +20,7 @@
 
         <ImageView android:id="@+id/song_image"
                    android:scaleType="centerInside"
-                   android:src="@drawable/placebo"
+                   android:src="@drawable/placeholder"
                    android:layout_width="120dp"
                    android:layout_height="120dp"/>
 
@@ -36,7 +36,6 @@
                           android:layout_height="wrap_content">
 
                 <TextView android:id="@+id/song_description"
-                          android:text="Choose your songChoose your songChoose your songChoose your song"
                           android:scrollHorizontally="true"
                           android:focusable = "true"
                           android:focusableInTouchMode = "true"

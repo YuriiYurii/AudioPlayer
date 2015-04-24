@@ -4,8 +4,9 @@ import android.graphics.Typeface;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,12 +40,23 @@ public class RecyclerCursorAdapter
     public void onBindViewHolder(SongViewHolder holder, int position) {
         StringBuilder stringBuilder = new StringBuilder(mPlaylist.get(position).getTitle())
                 .append("\n").append(mPlaylist.get(position).getArtist()).append("\n")
-                .append(mPlaylist.get(position).getDuration());
-        Log.e("TAG", "indexOf = " + stringBuilder.indexOf((String.valueOf(mPlaylist.get(position).getDuration()))));
+                .append("Duration : ").append(mPlaylist.get(position).getDuration());
         Spannable spannable = new SpannableStringBuilder(stringBuilder);
-        StyleSpan titleStyle = new StyleSpan(Typeface.BOLD);
-        StyleSpan artistStyle = new StyleSpan(Typeface.ITALIC);
-        holder.mSongDescription.setText(stringBuilder.toString());
+        int titleStart = stringBuilder.indexOf(mPlaylist.get(position).getTitle());
+        int artistStart = stringBuilder.indexOf(mPlaylist.get(position).getArtist());
+        int durationStart = stringBuilder.indexOf(
+                "Duration");
+        spannable.setSpan(new StyleSpan(Typeface.BOLD), titleStart, artistStart,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannable.setSpan(new RelativeSizeSpan(1.2f), titleStart, artistStart,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannable.setSpan(new RelativeSizeSpan(0.8f), artistStart, durationStart,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannable.setSpan(new StyleSpan(Typeface.ITALIC), artistStart, durationStart,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannable.setSpan(new RelativeSizeSpan(0.5f), durationStart, spannable.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        holder.mSongDescription.setText(spannable);
         holder.mSongImage.setImageResource(mPlaylist.get(position).getImageId());
     }
 

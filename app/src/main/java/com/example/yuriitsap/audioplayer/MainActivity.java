@@ -14,7 +14,6 @@ import android.os.RemoteException;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
@@ -155,6 +154,12 @@ public class MainActivity extends ActionBarActivity
     private void doPlayPause() {
 
         try {
+            if (mCurrentPosition == -1) {
+                mIMyAidlInterface.play(getSongUri());
+                mCurrentPosition = 0;
+                updateSongInfo(mPlaylist.get(mCurrentPosition));
+                return;
+            }
             if (mIMyAidlInterface != null && mIMyAidlInterface.isPlaying()) {
 
                 mIMyAidlInterface.pause();
