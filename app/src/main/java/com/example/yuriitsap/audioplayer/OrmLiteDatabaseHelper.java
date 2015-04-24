@@ -44,12 +44,7 @@ public class OrmLiteDatabaseHelper extends OrmLiteSqliteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase database, ConnectionSource connectionSource,
             int oldVersion, int newVersion) {
-        try {
-            TableUtils.dropTable(connectionSource, Song.class, true);
-            onCreate(database, connectionSource);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        //do nothing
     }
 
     public Dao<Song, Integer> getSongDao() {

@@ -1,8 +1,10 @@
 package com.example.yuriitsap.audioplayer;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -10,7 +12,6 @@ import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
-import android.util.Log;
 
 import java.io.IOException;
 
@@ -20,6 +21,8 @@ import java.io.IOException;
 public class MusicService extends Service
         implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
+    private static final String STOP_MUSIC = "STOP_MUSIC";
+    private static final int NOTIFICATION_ID = 1;
     private MediaPlayer mMediaPlayer;
     private RemoteCallbackList<IAsyncCallback> mIAsyncCallbackRemoteCallbackList
             = new RemoteCallbackList<>();
@@ -95,7 +98,10 @@ public class MusicService extends Service
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
+        if (intent.getStringExtra(STOP_MUSIC) != null) {
+            stopSelf();
+        }
+        return START_NOT_STICKY;
     }
 
     @Override
@@ -122,21 +128,26 @@ public class MusicService extends Service
         notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendInt = PendingIntent.getActivity(this, 0,
                 notIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent closeIntent = new Intent(this, MusicService.class);
+        notIntent.putExtra(STOP_MUSIC, true);
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, closeIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
 
         Notification.Builder builder = new Notification.Builder(this);
         builder.setContentIntent(pendInt)
                 .setSmallIcon(R.drawable.ic_action_play)
                 .setTicker("Lalala")
-                .setOngoing(true)
+                .setAutoCancel(false)
+                .setDeleteIntent(pendingIntent)
                 .setContentTitle("Playing")
                 .setContentText("First");
         Notification not = builder.build();
-        startForeground(1, not);
+        startForeground(NOTIFICATION_ID, not);
     }
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        for (int i = mIAsyncCallbackRemoteCallbackList.beginBroadcast(); i >= 0; i--) {
+        for (int i = mIAsyncCallbackRemoteCallbackList.beginBroadcast() - 1; i >= 0; i--) {
             try {
                 mIAsyncCallbackRemoteCallbackList.getBroadcastItem(i).playbackEnded();
             } catch (RemoteException e) {
@@ -144,5 +155,8 @@ public class MusicService extends Service
             }
         }
         mIAsyncCallbackRemoteCallbackList.finishBroadcast();
+        NotificationManager notificationManager = (NotificationManager) getSystemService(
+                Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(NOTIFICATION_ID);
     }
 }

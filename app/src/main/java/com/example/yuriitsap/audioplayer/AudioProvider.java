@@ -55,14 +55,13 @@ public class AudioProvider extends ContentProvider {
                 TITLE + " TEXT," +
                 DURATION + " REAL," +
                 IMAGE_ID + " REAL)";
-        public static final int DATABASE_VERSION = 4;
+        public static final int DATABASE_VERSION = 6;
     }
 
 
     @Override
     public boolean onCreate() {
         mOrmLiteDatabaseHelper = OrmLiteDatabaseHelper.getInstance(getContext());
-        Log.e("TAG", " content provider = " + mOrmLiteDatabaseHelper.toString());
         return true;
     }
 

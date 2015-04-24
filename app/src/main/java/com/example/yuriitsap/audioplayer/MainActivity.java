@@ -47,7 +47,6 @@ public class MainActivity extends ActionBarActivity
     private boolean mUserDragging;
     private Formatter mFormatter;
     private int mCurrentPosition = -1;
-    private Dao<Song, Integer> mSongDao;
     private List<Song> mPlaylist;
     private OrmLiteDatabaseHelper mOrmLiteDatabaseHelper;
     private StringBuilder mCurrentTimeFormatter = new StringBuilder();
@@ -61,6 +60,8 @@ public class MainActivity extends ActionBarActivity
 
         @Override
         public void playbackEnded() throws RemoteException {
+            mHandler.sendEmptyMessage(UPDATE_PLAY_PAUSE);
+            mHandler.sendEmptyMessage(UPDATE_PROGRESS);
 
         }
     };
@@ -87,8 +88,6 @@ public class MainActivity extends ActionBarActivity
 
         setContentView(R.layout.activity_main);
         mOrmLiteDatabaseHelper = OrmLiteDatabaseHelper.getInstance(MainActivity.this);
-        getContentResolver().query(AudioProvider.PLAYLIST_CONTENT_URI, null, null, null, null);
-        Log.e("TAG", " activity = " + mOrmLiteDatabaseHelper.toString());
         try {
             mPlaylist = mOrmLiteDatabaseHelper.getSongDao().queryForAll();
         } catch (SQLException e) {
@@ -110,7 +109,7 @@ public class MainActivity extends ActionBarActivity
         mSongImage = (ImageView) findViewById(R.id.song_image);
         mSongDescription = (TextView) findViewById(R.id.song_description);
         mSongDescription.setMovementMethod(new ScrollingMovementMethod());
-        mPrevious = (ImageButton) findViewById(R.id.next);
+        mPrevious = (ImageButton) findViewById(R.id.previous);
         mPlayPause = (ImageButton) findViewById(R.id.play_pause);
         mNext = (ImageButton) findViewById(R.id.next);
         mCurrentTime = (TextView) findViewById(R.id.current_song_time);
@@ -135,15 +134,13 @@ public class MainActivity extends ActionBarActivity
                 playNextSong();
             }
         });
-        mNext.setOnClickListener(new View.OnClickListener() {
+        mPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 playPreviousSong();
             }
         });
-
     }
-
 
     private Handler mHandler = new Handler() {
         @Override
@@ -249,6 +246,7 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
         mUserDragging = false;
+        mHandler.sendEmptyMessage(UPDATE_PROGRESS);
     }
 
     @Override
@@ -262,7 +260,6 @@ public class MainActivity extends ActionBarActivity
                 return;
             }
             doPlayPause();
-
         }
     }
 
@@ -272,23 +269,23 @@ public class MainActivity extends ActionBarActivity
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-
     }
 
     private void playPreviousSong() {
+        mCurrentPosition=--mCurrentPosition==-1?mPlaylist.size()-1:mCurrentPosition;
         playSong(getSongUri());
-        updateSongInfo(mPlaylist.get(--mCurrentPosition));
+        updateSongInfo(mPlaylist.get(mCurrentPosition));
     }
 
     private void playNextSong() {
+        mCurrentPosition=++mCurrentPosition==mPlaylist.size()-1?0:mCurrentPosition;
         playSong(getSongUri());
-        updateSongInfo(mPlaylist.get(++mCurrentPosition));
+        updateSongInfo(mPlaylist.get(mCurrentPosition));
     }
 
     private void updateSongInfo(Song song) {
         mSongImage.setImageResource(song.getImageId());
         mSongDescription.setText(song.getArtist() + " - " + song.getTitle());
-
     }
 
     private String getSongUri() {
