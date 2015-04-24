@@ -30,7 +30,6 @@ public class OrmLiteDatabaseHelper extends OrmLiteSqliteOpenHelper {
             mInstance = new OrmLiteDatabaseHelper(context);
         }
         return mInstance;
-
     }
 
     @Override
@@ -40,7 +39,6 @@ public class OrmLiteDatabaseHelper extends OrmLiteSqliteOpenHelper {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override

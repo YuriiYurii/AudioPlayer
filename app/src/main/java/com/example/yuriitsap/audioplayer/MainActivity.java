@@ -116,15 +116,32 @@ public class MainActivity extends ActionBarActivity
         mCurrentTime = (TextView) findViewById(R.id.current_song_time);
         mDuration = (TextView) findViewById(R.id.song_duration_time);
         mProgess = (SeekBar) findViewById(R.id.song_progress);
-
         mProgess.setMax(1000);
         mProgess.setOnSeekBarChangeListener(this);
+        initializeListeners();
+
+    }
+
+    private void initializeListeners() {
         mPlayPause.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 doPlayPause();
             }
         });
+        mNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playNextSong();
+            }
+        });
+        mNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                playPreviousSong();
+            }
+        });
+
     }
 
 
@@ -237,20 +254,35 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onHolderClicked(int position) {
         if (mIMyAidlInterface != null) {
-            try {
-                if (mCurrentPosition != position) {
-                    Log.e("TAG", "requested");
-                    mIMyAidlInterface.play(getSongUri());
-                    mCurrentPosition = position;
-                    updateSongInfo(mPlaylist.get(position));
-                    return;
-                }
-                doPlayPause();
-
-            } catch (RemoteException e) {
-                e.printStackTrace();
+            if (mCurrentPosition != position) {
+                Log.e("TAG", "requested");
+                playSong(getSongUri());
+                mCurrentPosition = position;
+                updateSongInfo(mPlaylist.get(position));
+                return;
             }
+            doPlayPause();
+
         }
+    }
+
+    private void playSong(String uri) {
+        try {
+            mIMyAidlInterface.play(getSongUri());
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void playPreviousSong() {
+        playSong(getSongUri());
+        updateSongInfo(mPlaylist.get(--mCurrentPosition));
+    }
+
+    private void playNextSong() {
+        playSong(getSongUri());
+        updateSongInfo(mPlaylist.get(++mCurrentPosition));
     }
 
     private void updateSongInfo(Song song) {
