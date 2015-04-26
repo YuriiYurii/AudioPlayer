@@ -23,6 +23,7 @@ public class RecyclerCursorAdapter
 
     private OnRowClickedCallBack mOnRowClickedCallBack;
     private List<Song> mPlaylist;
+    private int mCurrentPosition = -1;
 
     public RecyclerCursorAdapter(List<Song> playlist,
             OnRowClickedCallBack onRowClickedCallBack) {
@@ -78,16 +79,42 @@ public class RecyclerCursorAdapter
             mSongDescription = (TextView) itemView.findViewById(R.id.song_description);
             itemView.setOnClickListener(this);
             itemView.setActivated(true);
+
         }
 
         @Override
         public void onClick(View v) {
-            mOnRowClickedCallBack.onHolderClicked(getPosition());
+            Song song = null;
+            if (mCurrentPosition != getPosition()) {
+                mCurrentPosition = getPosition();
+                song = mPlaylist.get(mCurrentPosition);
+            }
+            mOnRowClickedCallBack.onHolderClicked(song);
         }
     }
 
     public interface OnRowClickedCallBack {
 
-        void onHolderClicked(int position);
+        void onHolderClicked(Song song);
+    }
+
+    public Song next() {
+        mCurrentPosition = ++mCurrentPosition == mPlaylist.size() ? 0
+                : mCurrentPosition;
+        return mPlaylist.get(mCurrentPosition);
+
+    }
+
+    public Song previous() {
+        mCurrentPosition = --mCurrentPosition == -1 ? mPlaylist.size() - 1 : mCurrentPosition;
+        return mPlaylist.get(mCurrentPosition);
+
+    }
+
+    public Song getCurrentSong() {
+        if (mCurrentPosition == -1) {
+            return null;
+        }
+        return mPlaylist.get(mCurrentPosition);
     }
 }

@@ -24,14 +24,17 @@ public class MusicService extends Service
     private static final String STOP_MUSIC = "STOP_MUSIC";
     private static final int NOTIFICATION_ID = 1256;
     private MediaPlayer mMediaPlayer;
+    private boolean mIsProcessing;
+    private Song mCurrentSong;
     private RemoteCallbackList<IAsyncCallback> mIAsyncCallbackRemoteCallbackList
             = new RemoteCallbackList<>();
     private IMyAidlInterface.Stub mStub = new IMyAidlInterface.Stub() {
         @Override
-        public void play(String uri) throws RemoteException {
+        public void play(Song song) throws RemoteException {
             try {
+                mCurrentSong=song;
                 mMediaPlayer.reset();
-                mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(uri));
+                mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(mCurrentSong.getUri()));
                 mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mMediaPlayer.prepareAsync();
             } catch (IOException e) {
@@ -120,6 +123,7 @@ public class MusicService extends Service
     @Override
     public void onPrepared(MediaPlayer mp) {
         mp.start();
+        mIsProcessing = true;
         try {
             for (int i = mIAsyncCallbackRemoteCallbackList.beginBroadcast() - 1; i >= 0; i--) {
                 mIAsyncCallbackRemoteCallbackList.getBroadcastItem(i).playbackStarted();
@@ -129,7 +133,6 @@ public class MusicService extends Service
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-
         Intent notIntent = new Intent(this, MainActivity.class);
         notIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendInt = PendingIntent.getActivity(this, 0,
@@ -159,6 +162,7 @@ public class MusicService extends Service
                 e.printStackTrace();
             }
         }
+        mIsProcessing = false;
         mp.seekTo(0);
         mIAsyncCallbackRemoteCallbackList.finishBroadcast();
         NotificationManager notificationManager = (NotificationManager) getSystemService(

@@ -27,7 +27,7 @@ public class Song implements Parcelable {
     public Song() {
     }
 
-    @DatabaseField(generatedId = true,columnName = "_id")
+    @DatabaseField(generatedId = true, columnName = "_id")
     private int mId;
     @DatabaseField(columnName = "image_id")
     private int mImageId;
@@ -37,6 +37,8 @@ public class Song implements Parcelable {
     private String mTitle;
     @DatabaseField(columnName = "duration")
     private int mDuration;
+    @DatabaseField(columnName = "image_path")
+    private String mUri;
 
     public Song(int id) {
         mId = id;
@@ -48,6 +50,7 @@ public class Song implements Parcelable {
         mDuration = source.readInt();
         mArtist = source.readString();
         mTitle = source.readString();
+        mUri = source.readString();
     }
 
     public int getId() {
@@ -89,8 +92,18 @@ public class Song implements Parcelable {
         return mImageId;
     }
 
-    public void setImageId(int imageId) {
+    public Song setImageId(int imageId) {
         mImageId = imageId;
+        return this;
+    }
+
+    public String getUri() {
+        return mUri;
+    }
+
+    public Song setUri(String uri) {
+        mUri = uri;
+        return this;
     }
 
     @Override
@@ -105,5 +118,6 @@ public class Song implements Parcelable {
         dest.writeInt(mDuration);
         dest.writeString(mArtist);
         dest.writeString(mTitle);
+        dest.writeString(mUri);
     }
 }

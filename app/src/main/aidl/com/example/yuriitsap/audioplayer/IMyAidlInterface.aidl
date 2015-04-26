@@ -3,19 +3,17 @@ package com.example.yuriitsap.audioplayer;
 
 // Declare any non-default types here with import statements
 import com.example.yuriitsap.audioplayer.IAsyncCallback;
+import com.example.yuriitsap.audioplayer.Song;
 interface IMyAidlInterface {
-    /**
-     * Demonstrates some basic types that you can use as parameters
-     * and return values in AIDL.
-     */
-     void play(String uri);
+
+     void play(in Song song);
      void start();
      void pause();
      boolean isPlaying();
+     boolean isLooping();
      void seekTo(int position);
      int getCurrentPosition();
      int getDuration();
-     boolean isLooping();
      void registerCallback(IAsyncCallback callback);
      void unRegisterCallback(IAsyncCallback callback);
 }

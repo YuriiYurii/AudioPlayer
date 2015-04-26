@@ -3,7 +3,6 @@ package com.example.yuriitsap.audioplayer;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -22,7 +21,6 @@ import android.widget.TextView;
 
 import java.sql.SQLException;
 import java.util.Formatter;
-import java.util.List;
 import java.util.Locale;
 
 
@@ -40,13 +38,12 @@ public class MainActivity extends ActionBarActivity
     private TextView mDuration, mCurrentTime;
     private SeekBar mProgess;
     private RecyclerView mRecyclerView;
+    private RecyclerCursorAdapter mRecyclerCursorAdapter;
 
     private IMyAidlInterface mIMyAidlInterface;
     private boolean mUserDragging;
     private Formatter mFormatter;
-    private int mCurrentPosition = -1;
-    private List<Song> mPlaylist;
-    private OrmLiteDatabaseHelper mOrmLiteDatabaseHelper;
+    private AudioProvider.OrmLiteDatabaseHelper mOrmLiteDatabaseHelper;
     private StringBuilder mCurrentTimeFormatter = new StringBuilder();
     private IAsyncCallback.Stub mStub = new IAsyncCallback.Stub() {
 
@@ -72,7 +69,7 @@ public class MainActivity extends ActionBarActivity
                 if (mIMyAidlInterface.isPlaying()) {
                     Log.e("TAG", "playing");
                 }
-                if (mIMyAidlInterface.isLooping()){
+                if (mIMyAidlInterface.isLooping()) {
                     Log.e("TAG", "looping");
                 }
             } catch (RemoteException e) {
@@ -91,14 +88,16 @@ public class MainActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
-        mOrmLiteDatabaseHelper = OrmLiteDatabaseHelper.getInstance(MainActivity.this);
         try {
-            mPlaylist = mOrmLiteDatabaseHelper.getSongDao().queryForAll();
+            mOrmLiteDatabaseHelper = AudioProvider.OrmLiteDatabaseHelper
+                    .getInstance(MainActivity.this);
+            mRecyclerView = (RecyclerView) findViewById(R.id.playlist);
+            mRecyclerCursorAdapter = new RecyclerCursorAdapter(
+                    mOrmLiteDatabaseHelper.getSongDao().queryForAll(), this);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        mRecyclerView = (RecyclerView) findViewById(R.id.playlist);
-        mRecyclerView.setAdapter(new RecyclerCursorAdapter(mPlaylist, this));
+        mRecyclerView.setAdapter(mRecyclerCursorAdapter);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
         initPlaybarControls();
         mFormatter = new Formatter(mCurrentTimeFormatter, Locale.getDefault());
@@ -177,10 +176,9 @@ public class MainActivity extends ActionBarActivity
     private void doPlayPause() {
 
         try {
-            if (mCurrentPosition == -1) {
-                mIMyAidlInterface.play(getSongUri());
-                mCurrentPosition = 0;
-                updateSongInfo(mPlaylist.get(mCurrentPosition));
+            if (mRecyclerCursorAdapter.getCurrentSong() == null) {
+                mIMyAidlInterface.play(mRecyclerCursorAdapter.next());
+                updateSongInfo(mRecyclerCursorAdapter.getCurrentSong());
                 return;
             }
             if (mIMyAidlInterface != null && mIMyAidlInterface.isPlaying()) {
@@ -259,49 +257,36 @@ public class MainActivity extends ActionBarActivity
     }
 
     @Override
-    public void onHolderClicked(int position) {
+    public void onHolderClicked(Song song) {
         mSongImage.setAlpha(0.5f);
         mSongImage.animate().alpha(1.0f);
-        if (mIMyAidlInterface != null) {
-            if (mCurrentPosition != position) {
-                Log.e("TAG", "requested");
-                playSong(getSongUri());
-                mCurrentPosition = position;
-                updateSongInfo(mPlaylist.get(position));
-                return;
-            }
-            doPlayPause();
+        if (mIMyAidlInterface != null && song != null) {
+            playSong(song);
         }
+        doPlayPause();
     }
 
-    private void playSong(String uri) {
+    private void playSong(Song song) {
         try {
-            mIMyAidlInterface.play(getSongUri());
+            mIMyAidlInterface.play(song);
+            updateSongInfo(song);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
     private void playPreviousSong() {
-        mCurrentPosition = --mCurrentPosition == -1 ? mPlaylist.size() - 1 : mCurrentPosition;
-        playSong(getSongUri());
-        updateSongInfo(mPlaylist.get(mCurrentPosition));
+        Song song = mRecyclerCursorAdapter.previous();
+        playSong(song);
     }
 
     private void playNextSong() {
-        mCurrentPosition = ++mCurrentPosition == mPlaylist.size() ? 0 : mCurrentPosition;
-        playSong(getSongUri());
-        updateSongInfo(mPlaylist.get(mCurrentPosition));
+        Song song = mRecyclerCursorAdapter.next();
+        playSong(song);
     }
 
     private void updateSongInfo(Song song) {
         mSongImage.setImageResource(song.getImageId());
         mSongDescription.setText(song.getArtist() + " - " + song.getTitle());
-    }
-
-    private String getSongUri() {
-        return Uri.parse("android.resource://com.example.yuriitsap.audioplayer/" + String
-                .valueOf(R.raw.first))
-                .toString();
     }
 }
