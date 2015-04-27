@@ -37,14 +37,12 @@ public class MainActivity extends ActionBarActivity
     private TextView mDuration, mCurrentTime;
     private SeekBar mProgess;
     private RecyclerView mRecyclerView;
-    private RecyclerCursorAdapter mRecyclerCursorAdapter;
-    private static int count = 0;
 
     private IMyAidlInterface mIMyAidlInterface;
-    private boolean mUserDragging;
+    private RecyclerCursorAdapter mRecyclerCursorAdapter;
     private Formatter mFormatter;
-    private AudioProvider.OrmLiteDatabaseHelper mOrmLiteDatabaseHelper;
     private StringBuilder mCurrentTimeFormatter = new StringBuilder();
+    private boolean mUserDragging;
     private IAsyncCallback.Stub mStub = new IAsyncCallback.Stub() {
 
         @Override
@@ -88,11 +86,10 @@ public class MainActivity extends ActionBarActivity
 
         setContentView(R.layout.activity_main);
         try {
-            mOrmLiteDatabaseHelper = AudioProvider.OrmLiteDatabaseHelper
-                    .getInstance(MainActivity.this);
             mRecyclerView = (RecyclerView) findViewById(R.id.playlist);
             mRecyclerCursorAdapter = new RecyclerCursorAdapter(
-                    mOrmLiteDatabaseHelper.getSongDao().queryForAll(), this);
+                    AudioProvider.OrmLiteDatabaseHelper
+                            .getInstance(MainActivity.this).getSongDao().queryForAll(), this);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -270,7 +267,6 @@ public class MainActivity extends ActionBarActivity
         }
         doPlayPause();
     }
-
 
     private void playSong(Song song) {
         try {

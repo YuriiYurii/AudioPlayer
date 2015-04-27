@@ -41,7 +41,6 @@ public class AudioProvider extends ContentProvider {
     private static final UriMatcher URI_MATCHER;
     private OrmLiteDatabaseHelper mOrmLiteDatabaseHelper;
 
-
     static {
         URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
         URI_MATCHER.addURI(AUTHORITY, AudioContract.ALL_ITEMS_PLAYLIST, ITEM_LIST);
@@ -180,11 +179,6 @@ public class AudioProvider extends ContentProvider {
             return mSongDao;
         }
 
-        @Override
-        public String toString() {
-            return "Our helper = " + mRandom.nextInt(10000);
-        }
-
         private List<Song> generateDefaultPlaylist() {
             LinkedList<Song> playlist = new LinkedList<>();
             for (int i = 100; i >= 0; --i) {
@@ -193,7 +187,6 @@ public class AudioProvider extends ContentProvider {
                                 .setTitle("Awesome song about Ukraine")
                                 .setDuration(180).setUri(mDefaultSongUri.toString()).setImageId(
                                 mImages[mRandom.nextInt(mImages.length - 1)]));
-
             }
             return playlist;
         }
