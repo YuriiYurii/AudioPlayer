@@ -120,4 +120,33 @@ public class Song implements Parcelable {
         dest.writeString(mTitle);
         dest.writeString(mUri);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Song song = (Song) o;
+
+        if (mId != song.mId) {
+            return false;
+        }
+        if (mImageId != song.mImageId) {
+            return false;
+        }
+        if (mDuration != song.mDuration) {
+            return false;
+        }
+        if (mArtist != null ? !mArtist.equals(song.mArtist) : song.mArtist != null) {
+            return false;
+        }
+        if (mTitle != null ? !mTitle.equals(song.mTitle) : song.mTitle != null) {
+            return false;
+        }
+        return !(mUri != null ? !mUri.equals(song.mUri) : song.mUri != null);
+    }
 }

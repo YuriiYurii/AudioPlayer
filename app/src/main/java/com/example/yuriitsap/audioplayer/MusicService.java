@@ -1,10 +1,8 @@
 package com.example.yuriitsap.audioplayer;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -22,7 +20,7 @@ public class MusicService extends Service
         implements MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener {
 
     private static final String STOP_MUSIC = "STOP_MUSIC";
-    private static final int NOTIFICATION_ID = 1256;
+    private static final int NOTIFICATION_ID = 1;
     private MediaPlayer mMediaPlayer;
     private boolean mIsProcessing;
     private Song mCurrentSong;
@@ -32,9 +30,10 @@ public class MusicService extends Service
         @Override
         public void play(Song song) throws RemoteException {
             try {
-                mCurrentSong=song;
+                mCurrentSong = song;
                 mMediaPlayer.reset();
-                mMediaPlayer.setDataSource(getApplicationContext(), Uri.parse(mCurrentSong.getUri()));
+                mMediaPlayer
+                        .setDataSource(getApplicationContext(), Uri.parse(mCurrentSong.getUri()));
                 mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mMediaPlayer.prepareAsync();
             } catch (IOException e) {
@@ -64,7 +63,7 @@ public class MusicService extends Service
 
         @Override
         public void unRegisterCallback(IAsyncCallback callback) throws RemoteException {
-
+            mIAsyncCallbackRemoteCallbackList.unregister(callback);
         }
 
         @Override
@@ -73,8 +72,18 @@ public class MusicService extends Service
         }
 
         @Override
+        public Song getCurrentSong() throws RemoteException {
+            return mCurrentSong;
+        }
+
+        @Override
         public boolean isLooping() throws RemoteException {
             return mMediaPlayer.isLooping();
+        }
+
+        @Override
+        public boolean isInProgress() throws RemoteException {
+            return mIsProcessing;
         }
 
         @Override
@@ -101,11 +110,6 @@ public class MusicService extends Service
     }
 
     @Override
-    public boolean onUnbind(Intent intent) {
-        return false;
-    }
-
-    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getStringExtra(STOP_MUSIC) != null) {
             stopSelf();
@@ -129,7 +133,6 @@ public class MusicService extends Service
                 mIAsyncCallbackRemoteCallbackList.getBroadcastItem(i).playbackStarted();
             }
             mIAsyncCallbackRemoteCallbackList.finishBroadcast();
-
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -144,11 +147,11 @@ public class MusicService extends Service
 
         Notification.Builder builder = new Notification.Builder(this);
         builder.setContentIntent(pendInt)
-                .setSmallIcon(R.drawable.ic_action_play)
-                .setTicker("Lalala")
+                .setSmallIcon(mCurrentSong.getImageId())
+                .setTicker("Playback started")
                 .setDeleteIntent(pendingIntent)
-                .setContentTitle("Playing")
-                .setContentText("First");
+                .setContentTitle(mCurrentSong.getTitle())
+                .setContentText(mCurrentSong.getArtist());
         Notification not = builder.build();
         startForeground(NOTIFICATION_ID, not);
     }
@@ -162,11 +165,9 @@ public class MusicService extends Service
                 e.printStackTrace();
             }
         }
-        mIsProcessing = false;
-        mp.seekTo(0);
         mIAsyncCallbackRemoteCallbackList.finishBroadcast();
-        NotificationManager notificationManager = (NotificationManager) getSystemService(
-                Context.NOTIFICATION_SERVICE);
+        mp.seekTo(0);
+        mIsProcessing = false;
         stopForeground(true);
     }
 }

@@ -65,7 +65,6 @@ public class AudioProvider extends ContentProvider {
         public static final int DATABASE_VERSION = 14;
     }
 
-
     @Override
     public boolean onCreate() {
         mOrmLiteDatabaseHelper = OrmLiteDatabaseHelper.getInstance(getContext());
@@ -88,7 +87,6 @@ public class AudioProvider extends ContentProvider {
                     e.printStackTrace();
                 }
         }
-
         return cursor;
     }
 

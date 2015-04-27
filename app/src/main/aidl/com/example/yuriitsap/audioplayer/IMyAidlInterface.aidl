@@ -11,9 +11,11 @@ interface IMyAidlInterface {
      void pause();
      boolean isPlaying();
      boolean isLooping();
+     boolean isInProgress();
      void seekTo(int position);
      int getCurrentPosition();
      int getDuration();
+     Song getCurrentSong();
      void registerCallback(IAsyncCallback callback);
      void unRegisterCallback(IAsyncCallback callback);
 }

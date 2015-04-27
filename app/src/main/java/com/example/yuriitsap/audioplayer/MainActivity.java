@@ -12,7 +12,6 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -39,6 +38,7 @@ public class MainActivity extends ActionBarActivity
     private SeekBar mProgess;
     private RecyclerView mRecyclerView;
     private RecyclerCursorAdapter mRecyclerCursorAdapter;
+    private static int count = 0;
 
     private IMyAidlInterface mIMyAidlInterface;
     private boolean mUserDragging;
@@ -66,11 +66,10 @@ public class MainActivity extends ActionBarActivity
             try {
                 mIMyAidlInterface = IMyAidlInterface.Stub.asInterface(service);
                 mIMyAidlInterface.registerCallback(mStub);
-                if (mIMyAidlInterface.isPlaying()) {
-                    Log.e("TAG", "playing");
-                }
-                if (mIMyAidlInterface.isLooping()) {
-                    Log.e("TAG", "looping");
+                if (mIMyAidlInterface.isInProgress()) {
+                    Song song = mIMyAidlInterface.getCurrentSong();
+                    updateSongInfo(song);
+                    mRecyclerView.scrollToPosition(mRecyclerCursorAdapter.setCurrentSong(song));
                 }
             } catch (RemoteException e) {
                 e.printStackTrace();
@@ -109,7 +108,14 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(mServiceConnection);
+
+        try {
+            mHandler.removeCallbacksAndMessages(Handler.class);
+            mIMyAidlInterface.unRegisterCallback(mStub);
+            unbindService(mServiceConnection);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     private void initPlaybarControls() {
@@ -174,7 +180,6 @@ public class MainActivity extends ActionBarActivity
     };
 
     private void doPlayPause() {
-
         try {
             if (mRecyclerCursorAdapter.getCurrentSong() == null) {
                 mIMyAidlInterface.play(mRecyclerCursorAdapter.next());
@@ -196,7 +201,6 @@ public class MainActivity extends ActionBarActivity
 
     private void updatePlayButton() {
         try {
-            Log.e("tag", "is playing activity = " + mIMyAidlInterface.isPlaying());
             if (mIMyAidlInterface != null && mIMyAidlInterface.isPlaying()) {
                 mPlayPause.setSelected(true);
             } else {
@@ -258,13 +262,15 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     public void onHolderClicked(Song song) {
-        mSongImage.setAlpha(0.5f);
-        mSongImage.animate().alpha(1.0f);
         if (mIMyAidlInterface != null && song != null) {
             playSong(song);
+            mSongImage.setAlpha(0.5f);
+            mSongImage.animate().alpha(1.0f);
+            return;
         }
         doPlayPause();
     }
+
 
     private void playSong(Song song) {
         try {
@@ -288,5 +294,7 @@ public class MainActivity extends ActionBarActivity
     private void updateSongInfo(Song song) {
         mSongImage.setImageResource(song.getImageId());
         mSongDescription.setText(song.getArtist() + " - " + song.getTitle());
+        mHandler.sendEmptyMessage(UPDATE_PLAY_PAUSE);
+        mHandler.sendEmptyMessage(UPDATE_PROGRESS);
     }
 }

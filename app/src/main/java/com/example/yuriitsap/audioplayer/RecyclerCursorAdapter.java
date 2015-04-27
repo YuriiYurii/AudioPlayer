@@ -79,7 +79,6 @@ public class RecyclerCursorAdapter
             mSongDescription = (TextView) itemView.findViewById(R.id.song_description);
             itemView.setOnClickListener(this);
             itemView.setActivated(true);
-
         }
 
         @Override
@@ -96,6 +95,7 @@ public class RecyclerCursorAdapter
     public interface OnRowClickedCallBack {
 
         void onHolderClicked(Song song);
+
     }
 
     public Song next() {
@@ -116,5 +116,10 @@ public class RecyclerCursorAdapter
             return null;
         }
         return mPlaylist.get(mCurrentPosition);
+    }
+
+    public int setCurrentSong(Song song) {
+        mCurrentPosition = mPlaylist.indexOf(song);
+        return mCurrentPosition;
     }
 }
